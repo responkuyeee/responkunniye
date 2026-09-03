@@ -1,0 +1,322 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email             String    @unique @db.VarChar(255)
+  phone             String    @unique @db.VarChar(20)
+  passwordHash      String    @map("password_hash")
+  name              String    @db.VarChar(255)
+  emailVerifiedAt   DateTime? @map("email_verified_at") @db.Timestamptz
+  phoneVerifiedAt   DateTime? @map("phone_verified_at") @db.Timestamptz
+  ageDeclared18plus Boolean   @default(false) @map("age_declared_18plus")
+  status            String    @default("active") @db.VarChar(20)
+  role              String    @default("user") @db.VarChar(30)
+  lastActiveAt      DateTime  @default(now()) @map("last_active_at") @db.Timestamptz
+
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile                 UserProfile?
+  researches              Research[]                @relation("ResearcherResearches")
+  participations          RespondentParticipation[] @relation("RespondentParticipations")
+  reviewedParticipations  RespondentParticipation[] @relation("AdminReviewedParticipations")
+  tokenWallet             TokenWallet?
+  withdrawals             Withdrawal[]              @relation("UserWithdrawals")
+  approvedWithdrawals     Withdrawal[]              @relation("AdminApprovedWithdrawals")
+  payments                Payment[]
+  reviewedQualityChecks   QualityCheck[]            @relation("AdminQualityChecks")
+  qualityScore            QualityScore?
+  reportedContentReports  ContentReport[]           @relation("UserContentReports")
+  reviewedContentReports  ContentReport[]           @relation("AdminReviewedReports")
+  supportTickets          SupportTicket[]           @relation("UserTickets")
+  assignedSupportTickets  SupportTicket[]           @relation("AssignedTickets")
+  adminReviews            AdminReview[]             @relation("AdminUserReviews")
+  notifications           Notification[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String    @unique @map("user_id") @db.Uuid
+  gender             String?   @db.VarChar(20)
+  religion           String?   @db.VarChar(50)
+  religionConsentAt  DateTime? @map("religion_consent_at") @db.Timestamptz
+  domicileProvince   String?   @map("domicile_province") @db.VarChar(100)
+  domicileCity       String?   @map("domicile_city") @db.VarChar(100)
+  domicileLat        Decimal?  @map("domicile_lat") @db.Decimal(9, 6)
+  domicileLng        Decimal?  @map("domicile_lng") @db.Decimal(9, 6)
+  domicileVerifiedAt DateTime? @map("domicile_verified_at") @db.Timestamptz
+  education          String?   @db.VarChar(100)
+  occupation         String?   @db.VarChar(100)
+  dataShareConsentAt DateTime? @map("data_share_consent_at") @db.Timestamptz
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model Research {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  researcherId             String    @map("researcher_id") @db.Uuid
+  title                    String    @db.VarChar(255)
+  description              String
+  externalSurveyUrl        String    @map("external_survey_url")
+  targetRespondentCount    Int       @map("target_respondent_count")
+  estimatedDurationMinutes Int       @map("estimated_duration_minutes")
+  deadline                 DateTime  @db.Timestamptz
+  status                   String    @default("draft") @db.VarChar(30)
+  tokensReserved           Int       @default(0) @map("tokens_reserved")
+  tokensConsumed           Int       @default(0) @map("tokens_consumed")
+  publishedAt              DateTime? @map("published_at") @db.Timestamptz
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  researcher         User                      @relation("ResearcherResearches", fields: [researcherId], references: [id])
+  criteria           ResearchCriterion[]
+  screeningQuestions ScreeningQuestion[]
+  participations     RespondentParticipation[]
+  tokenTransactions  TokenTransaction[]
+  contentReports     ContentReport[]
+
+  @@map("researches")
+}
+
+model ResearchCriterion {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  researchId String @map("research_id") @db.Uuid
+  field      String @db.VarChar(50)
+  operator   String @db.VarChar(20)
+  value      String
+
+  research Research @relation(fields: [researchId], references: [id], onDelete: Cascade)
+
+  @@map("research_criteria")
+}
+
+model ScreeningQuestion {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  researchId    String @map("research_id") @db.Uuid
+  questionText  String @map("question_text")
+  scoringWeight Int    @default(1) @map("scoring_weight")
+  passThreshold Int    @map("pass_threshold")
+
+  research Research          @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  answers  ScreeningAnswer[]
+
+  @@map("screening_questions")
+}
+
+model RespondentParticipation {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  researchId          String    @map("research_id") @db.Uuid
+  respondentId        String    @map("respondent_id") @db.Uuid
+  status              String    @default("invited") @db.VarChar(30)
+  screeningScore      Int?      @map("screening_score")
+  submittedAt         DateTime? @map("submitted_at") @db.Timestamptz
+  autoScreeningResult String?   @map("auto_screening_result") @db.VarChar(20)
+  adminReviewedBy     String?   @map("admin_reviewed_by") @db.Uuid
+  adminReviewedAt     DateTime? @map("admin_reviewed_at") @db.Timestamptz
+  holdReleaseAt       DateTime? @map("hold_release_at") @db.Timestamptz
+  rewardedAt          DateTime? @map("rewarded_at") @db.Timestamptz
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  research          Research           @relation(fields: [researchId], references: [id])
+  respondent        User               @relation("RespondentParticipations", fields: [respondentId], references: [id])
+  adminReviewer     User?              @relation("AdminReviewedParticipations", fields: [adminReviewedBy], references: [id])
+  screeningAnswers  ScreeningAnswer[]
+  reward            Reward?
+  tokenTransactions TokenTransaction[]
+  qualityChecks     QualityCheck[]
+
+  @@unique([researchId, respondentId], map: "respondent_participations_research_respondent_key")
+  @@map("respondent_participations")
+}
+
+model ScreeningAnswer {
+  id                  String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  participationId     String @map("participation_id") @db.Uuid
+  screeningQuestionId String @map("screening_question_id") @db.Uuid
+  answer              String
+  score               Int
+
+  participation     RespondentParticipation @relation(fields: [participationId], references: [id], onDelete: Cascade)
+  screeningQuestion ScreeningQuestion       @relation(fields: [screeningQuestionId], references: [id])
+
+  @@map("screening_answers")
+}
+
+model TokenWallet {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
+
+  user         User               @relation(fields: [userId], references: [id])
+  transactions TokenTransaction[]
+
+  @@map("token_wallets")
+}
+
+model TokenTransaction {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  walletId        String   @map("wallet_id") @db.Uuid
+  researchId      String?  @map("research_id") @db.Uuid
+  participationId String?  @map("participation_id") @db.Uuid
+  type            String   @db.VarChar(20)
+  amount          Int
+  idempotencyKey  String?  @unique @map("idempotency_key") @db.VarChar(255)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  wallet        TokenWallet              @relation(fields: [walletId], references: [id])
+  research      Research?                @relation(fields: [researchId], references: [id])
+  participation RespondentParticipation? @relation(fields: [participationId], references: [id])
+
+  @@index([walletId], map: "idx_token_tx_wallet")
+  @@map("token_transactions")
+}
+
+model Reward {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  participationId       String    @unique @map("participation_id") @db.Uuid
+  respondentTokenAmount Decimal   @default(0.8) @map("respondent_token_amount") @db.Decimal(4, 1)
+  platformTokenAmount   Decimal   @default(0.2) @map("platform_token_amount") @db.Decimal(4, 1)
+  status                String    @default("pending") @db.VarChar(20)
+  paidAt                DateTime? @map("paid_at") @db.Timestamptz
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  participation RespondentParticipation @relation(fields: [participationId], references: [id])
+
+  @@map("rewards")
+}
+
+model Withdrawal {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String    @map("user_id") @db.Uuid
+  tokenAmount        Int       @map("token_amount")
+  feePercentage      Decimal   @default(3.00) @map("fee_percentage") @db.Decimal(4, 2)
+  netAmountIdr       Decimal   @map("net_amount_idr") @db.Decimal(12, 2)
+  status             String    @default("requested") @db.VarChar(20)
+  approvedBy         String?   @map("approved_by") @db.Uuid
+  paymentProviderRef String?   @map("payment_provider_ref") @db.VarChar(255)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  processedAt        DateTime? @map("processed_at") @db.Timestamptz
+
+  user             User  @relation("UserWithdrawals", fields: [userId], references: [id])
+  approverAdminUser User? @relation("AdminApprovedWithdrawals", fields: [approvedBy], references: [id])
+
+  @@map("withdrawals")
+}
+
+model Payment {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  type           String   @db.VarChar(20)
+  provider       String   @db.VarChar(50)
+  providerRef    String?  @unique @map("provider_ref") @db.VarChar(255)
+  amountIdr      Decimal  @map("amount_idr") @db.Decimal(12, 2)
+  status         String   @default("pending") @db.VarChar(20)
+  idempotencyKey String?  @unique @map("idempotency_key") @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+model QualityCheck {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  participationId String   @map("participation_id") @db.Uuid
+  signalFlags     Json?    @map("signal_flags")
+  autoScore       Decimal? @map("auto_score") @db.Decimal(5, 2)
+  reviewedBy      String?  @map("reviewed_by") @db.Uuid
+  decision        String?  @db.VarChar(20)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  participation RespondentParticipation @relation(fields: [participationId], references: [id])
+  reviewer      User?                   @relation("AdminQualityChecks", fields: [reviewedBy], references: [id])
+
+  @@map("quality_checks")
+}
+
+model QualityScore {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                 String   @unique @map("user_id") @db.Uuid
+  score                  Decimal  @default(100.00) @db.Decimal(5, 2)
+  consecutiveGoodAnswers Int      @default(0) @map("consecutive_good_answers")
+  throttled              Boolean  @default(false)
+  updatedAt              DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("quality_scores")
+}
+
+model ContentReport {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  researchId  String   @map("research_id") @db.Uuid
+  reportedBy  String?  @map("reported_by") @db.Uuid
+  reason      String
+  status      String   @default("open") @db.VarChar(20)
+  reviewedBy  String?  @map("reviewed_by") @db.Uuid
+  actionTaken String?  @map("action_taken") @db.VarChar(30)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  research Research @relation(fields: [researchId], references: [id])
+  reporter User?    @relation("UserContentReports", fields: [reportedBy], references: [id])
+  reviewer User?    @relation("AdminReviewedReports", fields: [reviewedBy], references: [id])
+
+  @@map("content_reports")
+}
+
+model SupportTicket {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  category    String    @db.VarChar(30)
+  subject     String    @db.VarChar(255)
+  description String
+  status      String    @default("open") @db.VarChar(20)
+  assignedTo  String?   @map("assigned_to") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  resolvedAt  DateTime? @map("resolved_at") @db.Timestamptz
+
+  user     User  @relation("UserTickets", fields: [userId], references: [id])
+  assignee User? @relation("AssignedTickets", fields: [assignedTo], references: [id])
+
+  @@map("support_tickets")
+}
+
+model AdminReview {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId    String   @map("admin_id") @db.Uuid
+  adminRole  String   @map("admin_role") @db.VarChar(20)
+  targetType String   @map("target_type") @db.VarChar(30)
+  targetId   String   @map("target_id") @db.Uuid
+  action     String   @db.VarChar(50)
+  note       String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  admin User @relation("AdminUserReviews", fields: [adminId], references: [id])
+
+  @@map("admin_reviews")
+}
+
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String    @db.VarChar(50)
+  message   String
+  readAt    DateTime? @map("read_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
