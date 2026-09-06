@@ -117,3 +117,32 @@ Time:        13.784 s
 
 - **Backend NestJS**: `nest build` -> **0 Error (PASS)**
 - **Frontend Next.js**: `next build` -> **9 Static Routes Prerendered (PASS)**
+
+---
+
+## 9. Mobile Responsive Enhancement (Landing Page, Feed & Survey Builder)
+
+Pembaruan menyeluruh untuk kompatibilitas tampilan perangkat layar kecil (mobile phone $\le$ 640px dan tablet $\le$ 992px) tanpa mengubah atau merusak estetika tampilan desktop yang telah disetujui:
+
+1. **Landing Page (`/`)**:
+   - **Hero Section**: Menggunakan `.grid-hero` yang otomatis bertransisi dari 2 kolom (`1.15fr 0.85fr`) di desktop menjadi 1 kolom bersih di mobile. Ukuran tipografi judul hero menggunakan responsivitas fluid (`27px` di mobile) dengan tombol CTA vertikal penuh (`.hero-actions > a { width: 100% }`).
+   - **Stats Strip**: Menggunakan `.grid-stats` yang bergeser dari 4 kolom menjadi 2x2 di tablet dan 1 kolom di mobile dengan garis pembatas bawah yang rapi tanpa terpotong.
+   - **Cara Kerja (`.grid-2col`) & Keunggulan Bento (`.grid-3col`)**: Otomatis *stack* 1 kolom di perangkat bergerak, mempertahankan rasio kartu dan *touch target* minimal 44px.
+   - **Simulasi Biaya & Testimoni**: Form simulator dan kartu cerita mahasiswa tampil nyaman tanpa *horizontal scrollbar*.
+
+2. **Feed Kuesioner (`/feed`)**:
+   - **Header & Mobile Drawer**: Bilah navigasi dilengkapi *hamburger drawer* yang memuat pencarian, menu cepat, status login/tamu, dan tombol aksi.
+   - **Category Chips Bar**: Dilengkapi kelas `.no-scrollbar` dengan *touch horizontal scrolling* (`-webkit-overflow-scrolling: touch`) sehingga pengguna mobile dapat menggeser kategori dengan mulus.
+   - **Layout Feed & Sidebar**: Menggunakan `.grid-feed` yang otomatis menempatkan daftar kuesioner terlebih dahulu, diikuti kartu *sidebar* dompet saldo/tamu di bawahnya saat diakses dari layar kecil.
+   - **Kartu Kuesioner**: Tombol "Mulai Isi Kuesioner" berukuran *full-width* di mobile untuk kenyamanan sentuhan jempol.
+
+3. **Survey Builder Studio (`/research/create`)**:
+   - **Bilah Header Studio**: Menggunakan tata letak fleksibel dengan *segmented control* ("Editor Soal" vs "Live Preview") yang membentang rapi di mobile.
+   - **Kartu Pertanyaan**: Pertanyaan dan pemilih jenis soal otomatis bertumpuk vertikal dengan `.grid-builder-question` sehingga masukan judul tidak terhimpit.
+   - **Skala Likert**: Menggunakan `.grid-likert` yang responsif dan nyaman diakses pada layar selebar 360px–414px.
+   - **Sidebar Anggaran Token**: Menggunakan `.builder-aside` yang melepas `sticky` pada tablet/mobile (`position: static`) sehingga tidak menutupi bidang kerja editor.
+
+4. **Kepatuhan Desain & Ikonografi**:
+   - 100% menggunakan ikon vektor SVG (`Icons.tsx`), bebas dari stiker emoji.
+   - Semua rute terverifikasi merespons dengan **HTTP 200 OK**.
+

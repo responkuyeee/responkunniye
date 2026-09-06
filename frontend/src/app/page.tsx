@@ -2,567 +2,999 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Logo from './components/Logo';
-import { formatNumber } from './utils/format';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { formatNumber } from '@/utils/format';
+import {
+  IconFlask,
+  IconSurvey,
+  IconCheckCircle,
+  IconShieldCheck,
+  IconActivity,
+  IconCoins,
+  IconWallet,
+  IconLock,
+  IconArrowRight,
+  IconClock,
+  IconUsers,
+  IconFileSpreadsheet,
+  IconSliders,
+  IconZap,
+} from '@/components/Icons';
 
 export default function HomePage() {
-  // State untuk Live Interactive Calculator
+
+  // Simulator State
   const [respondentCount, setRespondentCount] = useState<number>(100);
   const [durationMinutes, setDurationMinutes] = useState<number>(7);
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [activeFaq, setActiveFaq] = useState<number | null>(0);
 
-  // Kalkulasi Token & Rupiah
-  const rewardPerRespondent = Math.max(10, Math.round(durationMinutes * 2));
-  const totalTokens = respondentCount * rewardPerRespondent;
-  const totalRupiah = totalTokens * 1000;
-  const respondentEarning = Math.round(rewardPerRespondent * 0.8);
-  const platformFee = rewardPerRespondent - respondentEarning;
+  // Kalkulasi Transparan Rupiah
+  const rewardPerPerson = Math.max(1200, Math.round(durationMinutes * 200));
+  const totalCost = respondentCount * rewardPerPerson;
+  const respondentTakeHome = Math.round(rewardPerPerson * 0.8);
 
   const faqs = [
     {
-      q: 'Berapa jumlah minimum responden yang bisa saya rekrut?',
-      a: 'Sesuai standar validitas riset platform, jumlah minimum target responden adalah 50 orang per kuesioner. Anda dapat menambah hingga ribuan responden sesuai kebutuhan.',
+      q: 'Berapa lama kuesioner saya bisa terisi penuh?',
+      a: 'Rata-rata 100 responden terpenuhi dalam waktu kurang dari 24 jam. Kuesioner Anda langsung tayang otomatis ke feed mahasiswa aktif begitu dipublikasikan.',
     },
     {
-      q: 'Bagaimana sistem token & pembagian reward 80:20 bekerja?',
-      a: '1 Token setara dengan Rp1.000. Saat riset dipublikasikan, token dialokasikan sebagai cadangan. Saat respon disetujui (Approved), 80% token otomatis cair ke wallet responden, dan 20% menjadi platform fee.',
+      q: 'Bagaimana ResponKu mencegah jawaban asal-asalan (bot / speeding)?',
+      a: 'Setiap pengisian diaudit oleh sistem anti-bot: deteksi kecepatan isi (anti-speeding), jebakan uji perhatian (attention check), dan deteksi pola jawaban seragam (straight-lining). Respon yang tidak valid otomatis ditolak.',
     },
     {
-      q: 'Bagaimana ResponKu menjamin kualitas jawaban responden?',
-      a: 'Sistem dilengkapi Quality Control otomatis: verifikasi durasi minimum pengerjaan, deteksi jawaban seragam (straight-lining), uji perhatian (attention check), serta masa hold 24 jam sebelum reward cair.',
+      q: 'Berapa minimal penarikan reward dan ke mana saja?',
+      a: 'Bisa ditarik mulai dari Rp20.000 langsung ke GoPay, OVO, DANA, ShopeePay, atau rekening bank (BCA, Mandiri, BRI). Diproses dalam waktu maksimal 24 jam.',
     },
     {
-      q: 'Apakah satu akun bisa menjadi Peneliti sekaligus Responden?',
-      a: 'Ya! ResponKu menggunakan sistem single-account dengan Multi-Role Dashboard. Anda cukup menggeser toggle switcher instan untuk berpindah antara Mode Researcher dan Mode Respondent.',
+      q: 'Apakah saya bisa pakai satu akun untuk sebar kuesioner sekaligus cari cuan?',
+      a: 'Bisa! Cukup satu akun. Anda bisa sebar kuesioner skripsi saat butuh responden, dan mengisi survei orang lain saat senggang untuk mengumpulkan reward.',
+    },
+  ];
+
+  const testimonials = [
+    {
+      name: 'Sarah Paramitha',
+      role: 'Mahasiswi Manajemen',
+      campus: 'Universitas Indonesia',
+      initials: 'SP',
+      quote: '150 responden skripsi terkumpul cuma dalam 8 jam. Datanya rapi, bersih, dan langsung bisa di-run di SPSS!',
     },
     {
-      q: 'Bagaimana metode penarikan dana (withdrawal)?',
-      a: 'Saldo token dapat ditarik langsung ke rekening bank atau e-wallet (GoPay, OVO, Dana) kapan saja dengan konversi 1 Token = Rp1.000 dipotong biaya penarikan platform transparan sebesar 3%.',
+      name: 'Dimas Arya',
+      role: 'Mahasiswa Informatika',
+      campus: 'Institut Teknologi Bandung',
+      initials: 'DA',
+      quote: 'Lumayan banget, seminggu dapat Rp75.000 cuma dari luangkan 10 menit jawab survei di sela-sela kelas.',
+    },
+    {
+      name: 'Dr. Rian Wibowo',
+      role: 'Dosen Pembimbing',
+      campus: 'Universitas Gadjah Mada',
+      initials: 'RW',
+      quote: 'Attention check otomatisnya efektif menyaring jawaban asal. Dataset hasil akhirnya memenuhi syarat uji validitas.',
+    },
+    {
+      name: 'Nabila Azzahra',
+      role: 'Mahasiswi Psikologi',
+      campus: 'Universitas Airlangga',
+      initials: 'NA',
+      quote: 'Simulasi biayanya transparan dari awal. Tidak ada biaya tersembunyi, dan pencairan uang saku sangat lancar.',
     },
   ];
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-bg)' }}>
-      {/* Global Header / Navigation — Bersih Sesuai design.md §2.1 */}
-      <header
+      <Navbar variant="landing" />
+
+      {/* ============================================================ */}
+      {/* 2. HERO SECTION — Punchy, Scannable & High Conversion        */}
+      {/* ============================================================ */}
+      <section
         style={{
+          background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)',
           borderBottom: '1px solid var(--neutral-border)',
-          background: 'var(--neutral-white)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
+          padding: '64px 0 60px 0',
         }}
       >
-        <div
-          className="container"
-          style={{
-            height: '68px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          {/* Logo Brand ResponKu dari Path /images/logo.png */}
-          <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-            <Logo height={38} />
-          </Link>
+        <div className="container">
+          <div className="grid-hero">
+            {/* Left Hero Content */}
+            <div>
+              <div style={{ marginBottom: '16px' }}>
+                <span className="badge-pill badge-pill-blue" style={{ fontSize: '12px', fontWeight: 700, padding: '5px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <IconZap size={13} color="var(--primary-blue)" />
+                  <span>Platform Kuesioner Mahasiswa No. 1 di Indonesia</span>
+                </span>
+              </div>
 
-          {/* Nav Links */}
-          <nav
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '24px',
-              fontSize: '14px',
-              color: 'var(--neutral-text-muted)',
-            }}
-          >
-            <a href="#simulator" style={{ transition: 'color 0.15s' }}>Kalkulator</a>
-            <a href="#fitur" style={{ transition: 'color 0.15s' }}>Standar Mutu</a>
-            <a href="#alur" style={{ transition: 'color 0.15s' }}>Cara Kerja</a>
-            <a href="#faq" style={{ transition: 'color 0.15s' }}>FAQ</a>
-          </nav>
+              <h1
+                className="hero-heading"
+                style={{
+                  fontSize: '44px',
+                  fontWeight: 800,
+                  lineHeight: 1.15,
+                  letterSpacing: '-0.03em',
+                  color: 'var(--primary-blue-dark)',
+                  marginBottom: '18px',
+                }}
+              >
+                Sebar Kuesioner Skripsi <span style={{ color: 'var(--primary-blue)' }}>Cepat & Valid</span>. Atau Isi Survei, <span style={{ color: 'var(--accent-green)' }}>Dapat Cuan</span>.
+              </h1>
 
-          {/* Quick Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link
-              href="/wallet"
-              className="badge badge-emerald"
-              style={{ padding: '6px 12px', fontSize: '13px', textDecoration: 'none' }}
-              title="1 Token = Rp1.000"
-            >
-              🪙 1 Token = Rp1.000
-            </Link>
-            <Link href="/dashboard" className="btn btn-primary" style={{ padding: '8px 18px', fontSize: '13px' }}>
-              Masuk Dashboard →
-            </Link>
+              <p
+                className="hero-subheading"
+                style={{
+                  fontSize: '16px',
+                  lineHeight: 1.6,
+                  color: 'var(--neutral-text-muted)',
+                  marginBottom: '30px',
+                  maxWidth: '520px',
+                }}
+              >
+                Kumpulkan 100+ responden presisi tanpa spam grup WA dan bebas bot. Atau luangkan 5 menit isi kuesioner, reward langsung cair ke GoPay, OVO, atau rekening.
+              </p>
+
+              {/* Dual Action CTAs */}
+              <div className="hero-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}>
+                <Link
+                  href="/register"
+                  className="btn btn-primary"
+                  style={{
+                    padding: '13px 26px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    borderRadius: 'var(--radius-md)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <IconFlask size={17} />
+                  <span>Sebar Kuesioner Sekarang</span>
+                </Link>
+
+                <Link
+                  href="/feed"
+                  className="btn btn-action"
+                  style={{
+                    padding: '13px 24px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    borderRadius: 'var(--radius-md)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <IconSurvey size={17} />
+                  <span>Isi Survei & Cuan</span>
+                </Link>
+              </div>
+
+              {/* Trust Badges */}
+              <div
+                className="hero-trust"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '20px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: 'var(--neutral-text)',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <IconCheckCircle size={15} color="var(--accent-green)" />
+                  100% Anti-Bot
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <IconCheckCircle size={15} color="var(--accent-green)" />
+                  Cair Instan E-Wallet
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <IconCheckCircle size={15} color="var(--accent-green)" />
+                  Siap Olah SPSS & Excel
+                </span>
+              </div>
+            </div>
+
+            {/* Right Hero Interactive Preview */}
+            <div>
+              <div
+                className="card"
+                style={{
+                  padding: '24px',
+                  borderRadius: 'var(--radius-xl)',
+                  boxShadow: 'var(--shadow-card-hover)',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                {/* Header Mockup */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--neutral-border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-green)' }} />
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--neutral-text)' }}>
+                      Survei Siap Dikerjakan
+                    </span>
+                  </div>
+                  <span className="badge-pill badge-pill-green" style={{ fontSize: '11px' }}>
+                    Cocok Profil Kampus
+                  </span>
+                </div>
+
+                {/* Sample Survey Card */}
+                <div
+                  style={{
+                    border: '1px solid var(--neutral-border)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '18px',
+                    backgroundColor: '#FAFCFF',
+                    marginBottom: '14px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neutral-text)', lineHeight: 1.4 }}>
+                      Preferensi Penggunaan Dompet Digital di Kalangan Mahasiswa
+                    </h3>
+                    <span className="badge badge-cyan" style={{ fontSize: '10px', flexShrink: 0 }}>Finansial</span>
+                  </div>
+
+                  {/* Reward & Duration */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                    <span className="badge-pill badge-pill-green" style={{ fontSize: '13px', fontWeight: 700, padding: '3px 10px' }}>
+                      Reward: Rp1.600
+                    </span>
+                    <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>• ~7 Menit</span>
+                  </div>
+
+                  {/* Quota Progress */}
+                  <div style={{ marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '5px' }}>
+                      <span style={{ color: 'var(--neutral-text-muted)' }}>Progress:</span>
+                      <strong style={{ color: 'var(--neutral-text)' }}>82 / 100 terisi (82%)</strong>
+                    </div>
+                    <div className="progress-bar-track" style={{ height: '6px' }}>
+                      <div className="progress-bar-fill" style={{ width: '82%', backgroundColor: 'var(--primary-blue)' }} />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--neutral-text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <IconShieldCheck size={14} color="var(--accent-green)" />
+                      Mahasiswa Terverifikasi
+                    </span>
+                    <Link
+                      href="/feed"
+                      className="btn btn-action"
+                      style={{ padding: '6px 14px', fontSize: '12px', borderRadius: 'var(--radius-sm)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <span>Mulai Kerjakan</span>
+                      <IconArrowRight size={13} />
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Quick Info Box */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--neutral-bg)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <IconWallet size={18} color="var(--accent-green)" />
+                    <span style={{ fontSize: '12px', color: 'var(--neutral-text)' }}>Rata-rata reward responden:</span>
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent-green)' }}>Rp50.000 / minggu</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      {/* Hero Section — Bersih, Profesional, Left & Center Balanced */}
-      <section style={{ padding: '64px 0 48px 0', borderBottom: '1px solid var(--neutral-border)', background: 'var(--neutral-white)' }}>
-        <div className="container" style={{ maxWidth: '980px', textAlign: 'center' }}>
-          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
-            <span className="badge">
-              Platform Dua Sisi Berbasis Token Pertama di Indonesia
+      {/* ============================================================ */}
+      {/* 3. STATS STRIP — Ringkas & Meyakinkan                        */}
+      {/* ============================================================ */}
+      <section
+        style={{
+          borderBottom: '1px solid var(--neutral-border)',
+          backgroundColor: '#FFFFFF',
+          padding: '28px 0',
+        }}
+      >
+        <div className="container">
+          <div className="grid-stats">
+            <div style={{ borderRight: '1px solid var(--neutral-border)' }}>
+              <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--primary-blue-dark)' }}>
+                10.000+
+              </div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--neutral-text)', marginTop: '2px' }}>
+                Responden Aktif
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--neutral-text-muted)' }}>
+                Dari 100+ kampus di Indonesia
+              </div>
+            </div>
+
+            <div style={{ borderRight: '1px solid var(--neutral-border)' }}>
+              <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--primary-blue)' }}>
+                &lt; 24 Jam
+              </div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--neutral-text)', marginTop: '2px' }}>
+                Kuota Terpenuhi
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--neutral-text-muted)' }}>
+                Target 100 responden tuntas
+              </div>
+            </div>
+
+            <div style={{ borderRight: '1px solid var(--neutral-border)' }}>
+              <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--neutral-text)' }}>
+                100%
+              </div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--neutral-text)', marginTop: '2px' }}>
+                Bebas Bot & Speeding
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--neutral-text-muted)' }}>
+                Uji perhatian & durasi valid
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--accent-green)' }}>
+                Rp850 Jt+
+              </div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--neutral-text)', marginTop: '2px' }}>
+                Reward Dicairkan
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--neutral-text-muted)' }}>
+                Via GoPay, OVO, DANA & Bank
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 4. CARA KERJA — 3 Langkah Ringkas untuk Kedua Sisi           */}
+      {/* ============================================================ */}
+      <section id="cara-kerja" style={{ padding: '64px 0' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '44px' }}>
+            <span className="badge-pill badge-pill-blue" style={{ marginBottom: '10px' }}>
+              Alur Sangat Simpel
             </span>
-          </div>
-
-          <h1
-            style={{
-              fontSize: '38px',
-              fontWeight: 700,
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
-              color: 'var(--neutral-text)',
-              marginBottom: '16px',
-            }}
-          >
-            Hubungkan <span style={{ color: 'var(--primary-blue)' }}>Peneliti Presisi</span> dengan{' '}
-            <span style={{ color: 'var(--accent-green)' }}>Responden Terverifikasi</span>
-          </h1>
-
-          <p
-            style={{
-              fontSize: '16px',
-              color: 'var(--neutral-text-muted)',
-              marginBottom: '32px',
-              maxWidth: '720px',
-              margin: '0 auto 32px auto',
-              lineHeight: 1.6,
-            }}
-          >
-            Dapatkan respon kuesioner valid dalam hitungan jam, bukan minggu. Didukung ledger token transparan, auto-screening anti-bot, dan pembagian reward 80% langsung ke responden.
-          </p>
-
-          {/* Dual Action CTAs */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '40px' }}>
-            <Link href="/dashboard" className="btn btn-primary" style={{ padding: '12px 26px', fontSize: '14px' }}>
-              🔬 Mulai Buat Riset (Peneliti)
-            </Link>
-            <Link href="/dashboard" className="btn btn-action" style={{ padding: '12px 26px', fontSize: '14px' }}>
-              📋 Jawab & Dapatkan Reward (Responden)
-            </Link>
-          </div>
-
-          {/* Trust Points */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '24px',
-              flexWrap: 'wrap',
-              fontSize: '13px',
-              color: 'var(--neutral-text-muted)',
-              paddingTop: '20px',
-              borderTop: '1px solid var(--neutral-border)',
-            }}
-          >
-            <span>✓ Auto-Publish Instan</span>
-            <span>✓ Deteksi Straight-Lining & Bot</span>
-            <span>✓ Penarikan Dana Transparan (3% Fee)</span>
-            <span>✓ 1 Akun Dua Mode Instan</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof / Metrics Row */}
-      <section style={{ padding: '36px 0' }}>
-        <div className="container">
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '16px',
-            }}
-          >
-            <div className="card">
-              <div style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', marginBottom: '6px' }}>Responden Aktif</div>
-              <div style={{ fontSize: '26px', fontWeight: 700, color: 'var(--neutral-text)' }}>10.000+</div>
-              <div style={{ fontSize: '12px', color: 'var(--accent-green)', marginTop: '4px' }}>Terverifikasi GPS & Demografi</div>
-            </div>
-
-            <div className="card">
-              <div style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', marginBottom: '6px' }}>Riset Selesai</div>
-              <div style={{ fontSize: '26px', fontWeight: 700, color: 'var(--primary-blue)' }}>1.450+</div>
-              <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', marginTop: '4px' }}>Akademik, UMKM & Startup</div>
-            </div>
-
-            <div className="card">
-              <div style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', marginBottom: '6px' }}>Kecepatan Pemenuhan</div>
-              <div style={{ fontSize: '26px', fontWeight: 700, color: 'var(--neutral-text)' }}>&lt; 24 Jam</div>
-              <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', marginTop: '4px' }}>Rata-rata 100 kuota terpenuhi</div>
-            </div>
-
-            <div className="card">
-              <div style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', marginBottom: '6px' }}>Total Reward Terdistribusi</div>
-              <div style={{ fontSize: '26px', fontWeight: 700, color: 'var(--accent-green)' }}>Rp850 Juta+</div>
-              <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', marginTop: '4px' }}>Dicairkan via Bank & E-Wallet</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Dual Simulator (Live Calculator & Card Preview Sesuai §3) */}
-      <section id="simulator" style={{ padding: '48px 0', borderTop: '1px solid var(--neutral-border)', background: 'var(--neutral-white)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <span className="badge" style={{ marginBottom: '8px' }}>Simulasi Dua Sisi Real-Time</span>
-            <h2 className="heading-page" style={{ fontSize: '28px', marginBottom: '8px' }}>
-              Transparansi Anggaran untuk Peneliti dan Hak Responden
+            <h2 className="heading-page" style={{ fontSize: '30px', marginBottom: '8px' }}>
+              Cara Kerja ResponKu
             </h2>
-            <p className="text-meta" style={{ maxWidth: '640px', margin: '0 auto', fontSize: '14px' }}>
-              Geser penggeser di bawah untuk mensimulasikan anggaran riset Peneliti dan estimasi reward nyata yang diterima Responden.
+            <p className="text-meta" style={{ maxWidth: '520px', margin: '0 auto', fontSize: '14px' }}>
+              Pilih kebutuhanmu: kumpulkan responden untuk skripsi, atau isi survei saat senggang untuk tambah uang saku.
             </p>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-              gap: '24px',
-            }}
-          >
-            {/* Left: Researcher Live Budget Calculator */}
-            <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <span className="badge">
-                    🔬 Sisi Peneliti (Researcher)
-                  </span>
-                  <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>1 Token = Rp1.000</span>
+          <div className="grid-2col">
+            {/* Sisi 1: Punya Kuesioner Skripsi */}
+            <div className="card" style={{ padding: '30px', borderRadius: 'var(--radius-xl)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '22px' }}>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--primary-blue-light)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--primary-blue)',
+                  }}
+                >
+                  <IconFlask size={20} />
                 </div>
-
-                <h3 className="heading-card" style={{ marginBottom: '20px' }}>
-                  Kalkulator Anggaran Kuesioner
-                </h3>
-
-                {/* Slider 1: Jumlah Responden */}
-                <div style={{ marginBottom: '20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--neutral-text-muted)' }}>Target Jumlah Responden:</span>
-                    <strong style={{ color: 'var(--neutral-text)', fontSize: '15px' }}>{respondentCount} Orang</strong>
-                  </div>
-                  <input
-                    type="range"
-                    min="50"
-                    max="500"
-                    step="25"
-                    value={respondentCount}
-                    onChange={(e) => setRespondentCount(Number(e.target.value))}
-                    style={{ marginBottom: '4px' }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--neutral-text-muted)' }}>
-                    <span>Min. 50</span>
-                    <span>250</span>
-                    <span>Maks. 500</span>
-                  </div>
-                </div>
-
-                {/* Slider 2: Durasi */}
-                <div style={{ marginBottom: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--neutral-text-muted)' }}>Estimasi Waktu Pengerjaan:</span>
-                    <strong style={{ color: 'var(--primary-blue)', fontSize: '15px' }}>{durationMinutes} Menit</strong>
-                  </div>
-                  <input
-                    type="range"
-                    min="3"
-                    max="20"
-                    step="1"
-                    value={durationMinutes}
-                    onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                    style={{ marginBottom: '4px' }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--neutral-text-muted)' }}>
-                    <span>3 Menit</span>
-                    <span>10 Menit</span>
-                    <span>20 Menit</span>
+                <div>
+                  <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--neutral-text)' }}>
+                    Punya Kuesioner Skripsi?
+                  </h3>
+                  <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>
+                    Untuk mahasiswa akhir, dosen & periset
                   </div>
                 </div>
               </div>
 
-              {/* Biaya Ringkasan */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--primary-blue-light)',
+                      color: 'var(--primary-blue)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    1
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '3px' }}>
+                      Susun Soal Kuesioner
+                    </h4>
+                    <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                      Buat pertanyaan pilihan ganda atau skala Likert dengan cepat. Tentukan kriteria responden (jurusan, semester, atau domisili).
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--primary-blue-light)',
+                      color: 'var(--primary-blue)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    2
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '3px' }}>
+                      Tentukan Target & Reward
+                    </h4>
+                    <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                      Pilih berapa banyak responden yang kamu butuhkan. Dana reward diamankan otomatis dan hanya cair ke respon yang valid.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--primary-blue-light)',
+                      color: 'var(--primary-blue)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    3
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '3px' }}>
+                      Unduh Dataset Siap Olah
+                    </h4>
+                    <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                      Jawaban bot disaring otomatis. Ekspor data lengkap format CSV/Excel yang rapi dan siap diolah langsung di SPSS.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sisi 2: Mau Tambah Uang Saku */}
+            <div className="card" style={{ padding: '30px', borderRadius: 'var(--radius-xl)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '22px' }}>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--accent-green-light)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--accent-green)',
+                  }}
+                >
+                  <IconSurvey size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--neutral-text)' }}>
+                    Mau Tambah Uang Saku?
+                  </h3>
+                  <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>
+                    Untuk mahasiswa & siapa saja yang ingin reward
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--accent-green-light)',
+                      color: 'var(--accent-green)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    1
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '3px' }}>
+                      Pilih Survei yang Cocok
+                    </h4>
+                    <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                      Buka katalog survei. Sistem otomatis menampilkan daftar kuesioner yang sesuai dengan profil dan jurusan kampusmu.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--accent-green-light)',
+                      color: 'var(--accent-green)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    2
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '3px' }}>
+                      Jawab Jujur & Teliti
+                    </h4>
+                    <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                      Luangkan 3–10 menit untuk mengisi survei. Pastikan membaca soal dengan cermat dan tidak asal klik.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--accent-green-light)',
+                      color: 'var(--accent-green)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    3
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '3px' }}>
+                      Tarik Saldo Instan
+                    </h4>
+                    <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                      Reward langsung masuk ke saldo dompetmu. Tarik kapan saja ke GoPay, OVO, DANA, atau rekening bank.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 5. KEUNGGULAN — Bento Cards Ringkas & Visual                 */}
+      {/* ============================================================ */}
+      <section
+        id="keunggulan"
+        style={{
+          borderTop: '1px solid var(--neutral-border)',
+          backgroundColor: '#FFFFFF',
+          padding: '64px 0',
+        }}
+      >
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '44px' }}>
+            <span className="badge-pill badge-pill-blue" style={{ marginBottom: '10px' }}>
+              Bebas Repot
+            </span>
+            <h2 className="heading-page" style={{ fontSize: '30px', marginBottom: '8px' }}>
+              Kenapa Pilih ResponKu?
+            </h2>
+            <p className="text-meta" style={{ maxWidth: '520px', margin: '0 auto', fontSize: '14px' }}>
+              Tinggalkan cara lama sebar link di grup chat yang lambat dan penuh jawaban asal.
+            </p>
+          </div>
+
+          <div className="grid-3col">
+            <div className="card-interactive" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'var(--primary-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-blue)', marginBottom: '14px' }}>
+                <IconShieldCheck size={22} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '8px' }}>
+                100% Anti-Bot & Anti-Speeding
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                Algoritma kami otomatis menyaring responden yang menjawab terburu-buru atau mengisi pilihan seragam (straight-lining).
+              </p>
+            </div>
+
+            <div className="card-interactive" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'var(--accent-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-green)', marginBottom: '14px' }}>
+                <IconActivity size={22} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '8px' }}>
+                Tayang Cepat Tanpa Antre
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                Kuesionermu langsung muncul ke ribuan responden terverifikasi begitu dipasang. Rata-rata terisi penuh dalam &lt; 24 jam.
+              </p>
+            </div>
+
+            <div className="card-interactive" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'var(--primary-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-blue)', marginBottom: '14px' }}>
+                <IconFileSpreadsheet size={22} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '8px' }}>
+                Dataset Siap Olah SPSS
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                Unduh hasil dalam format Excel/CSV dengan penomoran variabel yang rapi, siap untuk uji validitas dan reliabilitas.
+              </p>
+            </div>
+
+            <div className="card-interactive" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'var(--accent-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-green)', marginBottom: '14px' }}>
+                <IconWallet size={22} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '8px' }}>
+                Pencairan Reward Fleksibel
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                Tarik uang sakumu langsung ke GoPay, OVO, DANA, ShopeePay, atau rekening bank favoritmu kapan saja.
+              </p>
+            </div>
+
+            <div className="card-interactive" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'var(--primary-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-blue)', marginBottom: '14px' }}>
+                <IconUsers size={22} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '8px' }}>
+                Target Mahasiswa Presisi
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                Pilih target responden berdasarkan jurusan, fakultas, gender, usia, atau universitas tertentu sesuai kriteria risetmu.
+              </p>
+            </div>
+
+            <div className="card-interactive" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'var(--accent-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-green)', marginBottom: '14px' }}>
+                <IconLock size={22} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '8px' }}>
+                Privasi Terlindungi (UU PDP)
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                Data pribadi responden disamarkan dan dilindungi sesuai ketentuan UU Perlindungan Data Pribadi No. 27/2022.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 6. SIMULASI BIAYA & REWARD — Bersih & Transparan             */}
+      {/* ============================================================ */}
+      <section id="simulator" style={{ padding: '64px 0', borderTop: '1px solid var(--neutral-border)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '44px' }}>
+            <span className="badge-pill badge-pill-green" style={{ marginBottom: '10px' }}>
+              Transparan Tanpa Biaya Tersembunyi
+            </span>
+            <h2 className="heading-page" style={{ fontSize: '30px', marginBottom: '8px' }}>
+              Simulasi Biaya & Reward
+            </h2>
+            <p className="text-meta" style={{ maxWidth: '520px', margin: '0 auto', fontSize: '14px' }}>
+              Geser nilai untuk melihat estimasi biaya kuesioner dan reward yang diterima responden.
+            </p>
+          </div>
+
+          <div className="grid-simulator">
+            {/* Control Panel */}
+            <div className="card" style={{ padding: '30px', borderRadius: 'var(--radius-xl)' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '24px' }}>
+                Atur Kebutuhan Kuesionermu
+              </h3>
+
+              {/* Slider 1 */}
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--neutral-text)' }}>Target Responden:</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--primary-blue)' }}>
+                    {respondentCount} Orang
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="50"
+                  max="500"
+                  step="25"
+                  value={respondentCount}
+                  onChange={(e) => setRespondentCount(Number(e.target.value))}
+                  style={{ marginBottom: '6px' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--neutral-text-muted)' }}>
+                  <span>Min. 50</span>
+                  <span>250</span>
+                  <span>Maks. 500</span>
+                </div>
+              </div>
+
+              {/* Slider 2 */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--neutral-text)' }}>Estimasi Waktu Pengisian:</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--neutral-text)' }}>
+                    {durationMinutes} Menit
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="3"
+                  max="20"
+                  step="1"
+                  value={durationMinutes}
+                  onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                  style={{ marginBottom: '6px' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--neutral-text-muted)' }}>
+                  <span>Singkat (3 mnt)</span>
+                  <span>Standar (10 mnt)</span>
+                  <span>Komprehensif (20 mnt)</span>
+                </div>
+              </div>
+
+              {/* Cost Summary Box */}
               <div
                 style={{
-                  background: 'var(--neutral-bg)',
-                  borderRadius: '6px',
-                  padding: '16px',
+                  backgroundColor: 'var(--neutral-bg)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '20px',
                   border: '1px solid var(--neutral-border)',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
                   <span style={{ color: 'var(--neutral-text-muted)' }}>Alokasi per Responden:</span>
-                  <span>🪙 {rewardPerRespondent} Token (~Rp{rewardPerRespondent * 1000})</span>
+                  <span style={{ fontWeight: 700, color: 'var(--accent-green)' }}>
+                    Rp{formatNumber(rewardPerPerson)}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
-                  <span style={{ color: 'var(--neutral-text-muted)' }}>Total Cadangan Token:</span>
-                  <span style={{ color: 'var(--primary-blue-dark)', fontWeight: 600 }}>🪙 {formatNumber(totalTokens)} Token</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '14px' }}>
+                  <span style={{ color: 'var(--neutral-text-muted)' }}>Jumlah Responden:</span>
+                  <span style={{ fontWeight: 700, color: 'var(--neutral-text)' }}>
+                    {respondentCount} Orang
+                  </span>
                 </div>
-                <div style={{ height: '1px', background: 'var(--neutral-border)', marginBottom: '10px' }} />
+                <div style={{ height: '1px', backgroundColor: 'var(--neutral-border)', marginBottom: '14px' }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>Total Biaya Riset</div>
-                    <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--neutral-text)' }}>
-                      Rp{formatNumber(totalRupiah)}
+                    <div style={{ fontSize: '11px', color: 'var(--neutral-text-muted)' }}>Total Biaya:</div>
+                    <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--primary-blue-dark)' }}>
+                      Rp{formatNumber(totalCost)}
                     </div>
                   </div>
-                  <Link href="/dashboard" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
-                    Pasang Riset →
+                  <Link href="/register" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <span>Pasang Kuesioner Ini</span>
+                    <IconArrowRight size={14} />
                   </Link>
                 </div>
               </div>
             </div>
 
-            {/* Right: Respondent Live Card Preview Sesuai §2.4 */}
-            <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            {/* Right Card: Preview Responden */}
+            <div className="card" style={{ padding: '30px', borderRadius: 'var(--radius-xl)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <span className="badge badge-emerald">
-                    📋 Sisi Responden (Respondent)
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                  <span className="badge-pill badge-pill-green">
+                    Sisi Responden
                   </span>
-                  <span className="badge">
-                    Match 100% Profil
+                  <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>
+                    Tampilan di Feed
                   </span>
                 </div>
 
-                <h3 className="heading-card" style={{ marginBottom: '6px' }}>
-                  Tampilan Research Card di Feed Responden
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '14px' }}>
+                  Yang Dilihat Responden di Aplikasi:
                 </h3>
-                <p className="text-meta" style={{ marginBottom: '18px' }}>
-                  Struktur card persis seperti yang dilihat responden di halaman feed utamanya.
-                </p>
 
-                {/* Research Card Preview Persis Sesuai §2.4 */}
                 <div
                   style={{
-                    background: 'var(--neutral-white)',
+                    backgroundColor: '#FFFFFF',
                     border: '1px solid var(--neutral-border)',
-                    borderRadius: '6px',
-                    padding: '16px',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '18px',
+                    boxShadow: 'var(--shadow-xs)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                    <h4 className="heading-card" style={{ fontSize: '15px' }}>
-                      Preferensi Penggunaan Aplikasi Finansial 2026
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neutral-text)', lineHeight: 1.4 }}>
+                      Survei Skripsi: Dampak E-Commerce Terhadap Kebiasaan Belanja
                     </h4>
-                    <span className="badge">Survei Konsumen</span>
                   </div>
 
-                  {/* Reward Hijau Menonjol Sesuai §2.4 */}
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '8px 0' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>Reward:</span>
-                    <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--accent-green)' }}>
-                      Rp{formatNumber(respondentEarning * 1000)}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <span className="badge-pill badge-pill-green" style={{ fontSize: '13px', fontWeight: 800, padding: '3px 10px' }}>
+                      Reward: Rp{formatNumber(respondentTakeHome)}
                     </span>
                     <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>
-                      ({respondentEarning} Token)
+                      • ~{durationMinutes} Menit
                     </span>
                   </div>
 
-                  <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', marginBottom: '12px' }}>
-                    Kuesioner terkait kebiasaan menabung dan investasi generasi produktif di kota-kota besar.
+                  <div style={{ display: 'flex', gap: '14px', fontSize: '11px', color: 'var(--neutral-text)', marginBottom: '12px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <IconCheckCircle size={13} color="var(--accent-green)" />
+                      100 Kuota Tersedia
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <IconShieldCheck size={13} color="var(--accent-green)" />
+                      Verifikasi Kampus
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--neutral-border)', paddingTop: '12px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--accent-green)', fontWeight: 700 }}>
+                      Langsung Masuk Saldo
+                    </span>
+                    <span className="btn btn-action" style={{ padding: '5px 12px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <span>Kerjakan Survei</span>
+                      <IconArrowRight size={11} />
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '20px', padding: '14px 16px', backgroundColor: '#F1F6FD', borderRadius: 'var(--radius-md)', fontSize: '12px', color: 'var(--primary-blue-dark)', lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <IconShieldCheck size={16} color="var(--primary-blue)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <strong>Keadilan Bersama:</strong> Responden menerima reward transparan <strong>Rp{formatNumber(respondentTakeHome)}</strong> bersih per kuesioner yang berhasil diselesaikan dan lolos validasi.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 7. TESTIMONI — Pengalaman Nyata Mahasiswa                    */}
+      {/* ============================================================ */}
+      <section
+        id="testimoni"
+        style={{
+          borderTop: '1px solid var(--neutral-border)',
+          backgroundColor: '#FFFFFF',
+          padding: '64px 0',
+        }}
+      >
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '44px' }}>
+            <span className="badge-pill badge-pill-blue" style={{ marginBottom: '10px' }}>
+              Cerita Mahasiswa
+            </span>
+            <h2 className="heading-page" style={{ fontSize: '30px', marginBottom: '8px' }}>
+              Dipercaya Mahasiswa & Dosen
+            </h2>
+            <p className="text-meta" style={{ maxWidth: '500px', margin: '0 auto', fontSize: '14px' }}>
+              Pengalaman nyata dari mereka yang telah menggunakan ResponKu.
+            </p>
+          </div>
+
+          <div className="grid-4col">
+            {testimonials.map((t, idx) => (
+              <div
+                key={idx}
+                className="card-interactive"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  padding: '22px',
+                  borderRadius: 'var(--radius-lg)',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                    <div
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        backgroundColor: idx % 2 === 0 ? 'var(--primary-blue-light)' : 'var(--accent-green-light)',
+                        color: idx % 2 === 0 ? 'var(--primary-blue)' : 'var(--accent-green)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '13px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {t.initials}
+                    </div>
+                    <div>
+                      <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neutral-text)' }}>
+                        {t.name}
+                      </h4>
+                      <div style={{ fontSize: '11px', color: 'var(--neutral-text-muted)' }}>
+                        {t.role}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: '12px', color: 'var(--neutral-text)', lineHeight: 1.5, fontStyle: 'italic' }}>
+                    &ldquo;{t.quote}&rdquo;
                   </p>
+                </div>
 
-                  <div style={{ display: 'flex', gap: '14px', fontSize: '12px', color: 'var(--neutral-text-muted)', marginBottom: '14px' }}>
-                    <span>⏱️ ~{durationMinutes} Menit</span>
-                    <span>👥 34 / {respondentCount} terisi</span>
-                    <span>🛡️ Hold 24 Jam (Aman)</span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--neutral-border)', paddingTop: '10px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--accent-green)' }}>Split 80% Hak Responden</span>
-                    <button className="btn btn-action" style={{ padding: '6px 14px', fontSize: '13px' }}>
-                      Kerjakan Survey →
-                    </button>
-                  </div>
+                <div style={{ marginTop: '16px', paddingTop: '10px', borderTop: '1px solid var(--neutral-border)' }}>
+                  <span className="badge" style={{ fontSize: '10px' }}>
+                    {t.campus}
+                  </span>
                 </div>
               </div>
-
-              <div style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', marginTop: '16px', lineHeight: 1.5 }}>
-                💡 <strong>Keadilan Transaksi:</strong> Responden menerima <strong>Rp{formatNumber(respondentEarning * 1000)}</strong> per pengisian secara transparan. Saldo dapat ditarik ke rekening bank atau e-wallet kapan saja.
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Bento Grid: Standar Mutu Platform */}
-      <section id="fitur" style={{ padding: '56px 0', borderTop: '1px solid var(--neutral-border)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <span className="badge" style={{ marginBottom: '8px' }}>Standar Mutu Platform</span>
-            <h2 className="heading-page" style={{ fontSize: '28px', marginBottom: '8px' }}>
-              Keunggulan Arsitektur ResponKu
-            </h2>
-            <p className="text-meta" style={{ maxWidth: '600px', margin: '0 auto', fontSize: '14px' }}>
-              Dirancang untuk menghilangkan kendala riset konvensional: responden fiktif, data lambat, dan biaya tidak transparan.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '16px',
-            }}
-          >
-            <div className="card">
-              <div style={{ fontSize: '22px', marginBottom: '10px' }}>🎯</div>
-              <h3 className="heading-card" style={{ marginBottom: '6px' }}>Verifikasi GPS & Demografi Presisi</h3>
-              <p className="text-meta" style={{ lineHeight: 1.5 }}>
-                Filter responden berbasis usia (18+), domisili aktual dengan verifikasi GPS, dan screening bersyarat agar target 100% tepat sasaran.
-              </p>
-            </div>
-
-            <div className="card">
-              <div style={{ fontSize: '22px', marginBottom: '10px' }}>⚡</div>
-              <h3 className="heading-card" style={{ marginBottom: '6px' }}>Auto-Publish Tanpa Antrean</h3>
-              <p className="text-meta" style={{ lineHeight: 1.5 }}>
-                Begitu token dicadangkan, kuesioner Anda langsung tayang otomatis dengan filter konten cerdas tanpa birokrasi manual.
-              </p>
-            </div>
-
-            <div className="card">
-              <div style={{ fontSize: '22px', marginBottom: '10px' }}>🛡️</div>
-              <h3 className="heading-card" style={{ marginBottom: '6px' }}>Deteksi Anti-Bot & Straight-Lining</h3>
-              <p className="text-meta" style={{ lineHeight: 1.5 }}>
-                Algoritma QC otomatis memantau durasi pengerjaan, jawaban seragam, dan attention check untuk menjamin integritas data kuesioner.
-              </p>
-            </div>
-
-            <div className="card">
-              <div style={{ fontSize: '22px', marginBottom: '10px' }}>🪙</div>
-              <h3 className="heading-card" style={{ marginBottom: '6px' }}>Ledger Transparan & Split 80:20</h3>
-              <p className="text-meta" style={{ lineHeight: 1.5 }}>
-                Setiap mutasi token tercatat dalam buku besar append-only. Responden berhak atas 80% reward yang aman cair setelah masa hold 24 jam.
-              </p>
-            </div>
-
-            <div className="card">
-              <div style={{ fontSize: '22px', marginBottom: '10px' }}>💳</div>
-              <h3 className="heading-card" style={{ marginBottom: '6px' }}>Pencairan Fleksibel Bank & E-Wallet</h3>
-              <p className="text-meta" style={{ lineHeight: 1.5 }}>
-                Tarik saldo ke BCA, Mandiri, GoPay, OVO, atau Dana kapan saja dengan potongan fee penarikan transparan sebesar 3%.
-              </p>
-            </div>
-
-            <div className="card">
-              <div style={{ fontSize: '22px', marginBottom: '10px' }}>🔒</div>
-              <h3 className="heading-card" style={{ marginBottom: '6px' }}>Kepatuhan Privasi Data (UU PDP)</h3>
-              <p className="text-meta" style={{ lineHeight: 1.5 }}>
-                Persetujuan eksplisit untuk data sensitif (agama, domisili) dipisahkan secara tegas dari syarat & ketentuan umum.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Alur Kerja 3 Langkah */}
-      <section id="alur" style={{ padding: '56px 0', borderTop: '1px solid var(--neutral-border)', background: 'var(--neutral-white)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <span className="badge" style={{ marginBottom: '8px' }}>Alur Penggunaan</span>
-            <h2 className="heading-page" style={{ fontSize: '28px', marginBottom: '8px' }}>
-              Bagaimana Alur Kerja di ResponKu?
-            </h2>
-            <p className="text-meta" style={{ maxWidth: '600px', margin: '0 auto', fontSize: '14px' }}>
-              Memangkas waktu operasional pengumpulan responden hingga 80% lebih cepat dibanding cara konvensional.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-              gap: '20px',
-            }}
-          >
-            {/* Alur Peneliti */}
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                <span className="badge">Alur Peneliti (Researcher)</span>
-                <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>3 Langkah Mudah</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '4px', background: '#EDF4FE', color: 'var(--primary-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>1</div>
-                  <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>Buat Kuesioner & Kriteria</h4>
-                    <p className="text-meta">Masukkan link Google Form/Typeform dan tetapkan target responden (min. 50 orang).</p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '4px', background: '#EDF4FE', color: 'var(--primary-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>2</div>
-                  <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>Cadangkan Token & Auto-Publish</h4>
-                    <p className="text-meta">Biaya terhitung transparan. Riset otomatis aktif dan didistribusikan ke responden yang cocok.</p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '4px', background: '#EDF4FE', color: 'var(--primary-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>3</div>
-                  <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>Pantau Progress & Ekspor CSV</h4>
-                    <p className="text-meta">Lihat perkembangan responden secara live dan unduh dataset bersih siap analisis.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Alur Responden */}
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                <span className="badge badge-emerald">Alur Responden (Respondent)</span>
-                <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>3 Langkah Menghasilkan</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '4px', background: 'var(--accent-green-light)', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>1</div>
-                  <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>Pilih Riset yang Cocok</h4>
-                    <p className="text-meta">Feed hanya menampilkan survei yang sesuai dengan profil dan verifikasi domisili Anda.</p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '4px', background: 'var(--accent-green-light)', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>2</div>
-                  <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>Isi Jawaban Secara Jujur</h4>
-                    <p className="text-meta">Selesaikan kuesioner dengan cermat tanpa terburu-buru untuk menjaga reputasi akun.</p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '4px', background: 'var(--accent-green-light)', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>3</div>
-                  <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>Terima Reward & Tarik Dana</h4>
-                    <p className="text-meta">Reward otomatis masuk ke saldo token setelah masa hold 24 jam dan siap ditarik ke bank.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section id="faq" style={{ padding: '56px 0', borderTop: '1px solid var(--neutral-border)' }}>
+      {/* ============================================================ */}
+      {/* 8. FAQ ACCORDION — To The Point                             */}
+      {/* ============================================================ */}
+      <section id="faq" style={{ padding: '64px 0', borderTop: '1px solid var(--neutral-border)' }}>
         <div className="container" style={{ maxWidth: '800px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-            <span className="badge" style={{ marginBottom: '8px' }}>Pertanyaan Umum</span>
-            <h2 className="heading-page" style={{ fontSize: '26px', marginBottom: '8px' }}>
-              Kerap Ditanyakan (FAQ)
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <span className="badge-pill badge-pill-blue" style={{ marginBottom: '10px' }}>
+              Pertanyaan Umum
+            </span>
+            <h2 className="heading-page" style={{ fontSize: '28px', marginBottom: '8px' }}>
+              FAQ ResponKu
             </h2>
-            <p className="text-meta">
-              Hal-hal penting seputar operasional platform ResponKu.
+            <p className="text-meta" style={{ fontSize: '14px' }}>
+              Jawaban cepat seputar penyebaran kuesioner, validitas data, dan pencairan reward.
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {faqs.map((item, idx) => {
               const isOpen = activeFaq === idx;
               return (
@@ -570,22 +1002,56 @@ export default function HomePage() {
                   key={idx}
                   className="card"
                   style={{
-                    padding: '16px 20px',
+                    padding: '18px 22px',
                     cursor: 'pointer',
-                    borderColor: isOpen ? 'var(--primary-blue)' : 'var(--neutral-border)',
+                    borderRadius: 'var(--radius-lg)',
+                    borderColor: isOpen ? 'var(--primary-blue)' : 'rgba(11, 46, 99, 0.08)',
+                    boxShadow: isOpen ? '0 4px 16px rgba(27, 111, 224, 0.08)' : 'var(--shadow-card)',
+                    transition: 'all 0.2s ease',
                   }}
                   onClick={() => setActiveFaq(isOpen ? null : idx)}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4 style={{ fontSize: '14px', fontWeight: 600, color: isOpen ? 'var(--primary-blue)' : 'var(--neutral-text)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '14px' }}>
+                    <h3
+                      style={{
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        color: isOpen ? 'var(--primary-blue)' : 'var(--neutral-text)',
+                        lineHeight: 1.4,
+                      }}
+                    >
                       {item.q}
-                    </h4>
-                    <span style={{ fontSize: '16px', color: 'var(--neutral-text-muted)' }}>
+                    </h3>
+                    <div
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        backgroundColor: isOpen ? 'var(--primary-blue-light)' : 'var(--neutral-bg)',
+                        color: isOpen ? 'var(--primary-blue)' : 'var(--neutral-text-muted)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        flexShrink: 0,
+                      }}
+                    >
                       {isOpen ? '−' : '+'}
-                    </span>
+                    </div>
                   </div>
+
                   {isOpen && (
-                    <div style={{ marginTop: '10px', fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.6, borderTop: '1px solid var(--neutral-border)', paddingTop: '10px' }}>
+                    <div
+                      style={{
+                        marginTop: '12px',
+                        fontSize: '13px',
+                        color: 'var(--neutral-text-muted)',
+                        lineHeight: 1.6,
+                        borderTop: '1px solid var(--neutral-border)',
+                        paddingTop: '12px',
+                      }}
+                    >
                       {item.a}
                     </div>
                   )}
@@ -596,82 +1062,63 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer Bersih & Sederhana */}
-      <footer
+      {/* ============================================================ */}
+      {/* 9. CALL TO ACTION BANNER                                     */}
+      {/* ============================================================ */}
+      <section
         style={{
-          borderTop: '1px solid var(--neutral-border)',
-          background: 'var(--neutral-white)',
-          padding: '40px 0 24px 0',
-          fontSize: '13px',
-          color: 'var(--neutral-text-muted)',
+          backgroundColor: 'var(--primary-blue-dark)',
+          padding: '64px 0',
+          color: '#FFFFFF',
+          textAlign: 'center',
         }}
       >
-        <div className="container">
-          <div
+        <div className="container" style={{ maxWidth: '720px' }}>
+          <h2
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '24px',
-              marginBottom: '32px',
+              fontSize: '32px',
+              fontWeight: 800,
+              lineHeight: 1.25,
+              marginBottom: '14px',
+              color: '#FFFFFF',
             }}
           >
-            <div>
-              <div style={{ marginBottom: '12px' }}>
-                <Logo height={30} />
-              </div>
-              <p style={{ lineHeight: 1.5, fontSize: '13px' }}>
-                Marketplace dua sisi riset kuesioner berbasis token terverifikasi di Indonesia.
-              </p>
-            </div>
+            Siap Selesaikan Skripsimu Lebih Cepat?
+          </h2>
 
-            <div>
-              <div style={{ fontWeight: 600, color: 'var(--neutral-text)', marginBottom: '10px' }}>Navigasi Platform</div>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <li><Link href="/dashboard" style={{ color: 'var(--neutral-text-muted)' }}>Dashboard Multi-Role</Link></li>
-                <li><Link href="/wallet" style={{ color: 'var(--neutral-text-muted)' }}>Dompet & Saldo Token</Link></li>
-                <li><Link href="/support" style={{ color: 'var(--neutral-text-muted)' }}>Pusat Bantuan & Banding</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <div style={{ fontWeight: 600, color: 'var(--neutral-text)', marginBottom: '10px' }}>Panel Admin</div>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <li><Link href="/admin/quality" style={{ color: 'var(--neutral-text-muted)' }}>Admin Quality Control</Link></li>
-                <li><Link href="/admin/finance" style={{ color: 'var(--neutral-text-muted)' }}>Admin Finance & Penarikan</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <div style={{ fontWeight: 600, color: 'var(--neutral-text)', marginBottom: '10px' }}>Nilai Tukar Token</div>
-              <div style={{ background: 'var(--neutral-bg)', padding: '12px', borderRadius: '6px', border: '1px solid var(--neutral-border)' }}>
-                <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>Kurs Tetap:</div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--accent-green)' }}>1 Token = Rp1.000</div>
-                <div style={{ fontSize: '11px', color: 'var(--neutral-text-muted)', marginTop: '2px' }}>Biaya penarikan 3%</div>
-              </div>
-            </div>
-          </div>
-
-          <div
+          <p
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderTop: '1px solid var(--neutral-border)',
-              paddingTop: '20px',
-              fontSize: '12px',
-              flexWrap: 'wrap',
-              gap: '10px',
+              fontSize: '15px',
+              lineHeight: 1.6,
+              marginBottom: '28px',
+              color: '#CBD5E1',
             }}
           >
-            <div>© 2026 ResponKu (Marketplace Responden). Seluruh hak cipta dilindungi.</div>
-            <div style={{ display: 'flex', gap: '14px' }}>
-              <span>Desain Sesuai design.md</span>
-              <span>•</span>
-              <span style={{ color: 'var(--accent-green)' }}>● Sistem Operasional Aktif</span>
-            </div>
+            Daftar sekarang dalam 1 menit. Kumpulkan responden valid tanpa ribet, atau mulai kumpulkan uang saku dari mengisi survei.
+          </p>
+
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Link
+              href="/register"
+              className="btn btn-action"
+              style={{
+                padding: '14px 32px',
+                fontSize: '14px',
+                fontWeight: 700,
+                borderRadius: 'var(--radius-md)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span>Mulai Sekarang — Gratis</span>
+              <IconArrowRight size={16} />
+            </Link>
           </div>
         </div>
-      </footer>
+      </section>
+
+      <Footer />
     </div>
   );
 }

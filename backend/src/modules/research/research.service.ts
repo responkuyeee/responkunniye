@@ -11,7 +11,6 @@ import { CreateResearchDto } from './dto/create-research.dto';
 // Status research sesuai DATABASE_SCHEMA.md
 type ResearchStatus = 'draft' | 'published' | 'completed' | 'cancelled';
 
-
 // Field profil yang bisa dijadikan kriteria filter
 const ALLOWED_CRITERION_FIELDS = [
   'gender',
@@ -431,4 +430,3 @@ export class ResearchService {
     };
   }
 }
-

@@ -13,7 +13,7 @@ import {
 import { SupportService } from './support.service';
 import { CreateSupportTicketDto, ResolveSupportTicketDto } from './dto/support-ticket.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../auth/current-user.decorator';
+import { CurrentUser, AuthUser } from '../auth/current-user.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
@@ -28,7 +28,7 @@ export class SupportController {
   @Post('support/tickets')
   @HttpCode(HttpStatus.CREATED)
   async createTicket(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Body() dto: CreateSupportTicketDto,
   ) {
     return this.supportService.createTicket(user.id, dto);
@@ -39,7 +39,7 @@ export class SupportController {
    */
   @Get('support/tickets')
   @HttpCode(HttpStatus.OK)
-  async getMyTickets(@CurrentUser() user: any) {
+  async getMyTickets(@CurrentUser() user: AuthUser) {
     return this.supportService.getUserTickets(user.id);
   }
 
@@ -62,7 +62,7 @@ export class SupportController {
   @Roles('admin_quality', 'admin_finance')
   @HttpCode(HttpStatus.OK)
   async resolveTicket(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ResolveSupportTicketDto,
   ) {

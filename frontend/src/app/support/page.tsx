@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Logo from '../components/Logo';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { formatDate } from '@/utils/format';
+import { IconCheckCircle, IconXCircle, IconArrowLeft } from '@/components/Icons';
 
 interface TicketItem {
   id: string;
@@ -20,7 +23,7 @@ export default function SupportDisputePage() {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [statusMsg, setStatusMsg] = useState('');
+  const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [tickets, setTickets] = useState<TicketItem[]>([
     {
@@ -34,31 +37,32 @@ export default function SupportDisputePage() {
   ]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  const fetchTickets = async () => {
-    setLoadingHistory(true);
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) return;
-      const res = await fetch('/api/support/tickets', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.data && data.data.length > 0) {
-          setTickets(data.data);
-        }
-      }
-    } catch {
-      // Fallback tetap tampil
-    } finally {
-      setLoadingHistory(false);
-    }
-  };
-
   useEffect(() => {
-    if (activeTab === 'history') {
-      fetchTickets();
-    }
+    if (activeTab !== 'history') return;
+    let isMounted = true;
+    const fetchTickets = async () => {
+      setLoadingHistory(true);
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+        const res = await fetch('/api/support/tickets', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.data && data.data.length > 0) {
+            setTickets(data.data);
+          }
+        }
+      } catch {
+        // Fallback tetap tampil
+      } finally {
+        if (isMounted) setLoadingHistory(false);
+      }
+    };
+
+    fetchTickets();
+    return () => { isMounted = false; };
   }, [activeTab]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,7 +70,7 @@ export default function SupportDisputePage() {
     if (!subject.trim() || !description.trim()) return;
 
     setSubmitting(true);
-    setStatusMsg('');
+    setStatusMsg(null);
     try {
       const token = localStorage.getItem('access_token');
       const res = await fetch('/api/support/tickets', {
@@ -81,16 +85,20 @@ export default function SupportDisputePage() {
           description,
         }),
       });
+
       const data = await res.json();
-      if (res.ok) {
-        setStatusMsg('✅ Tiket permohonan berhasil dikirim. Tim admin akan meninjau dalam maksimal 48 jam.');
-        setSubject('');
-        setDescription('');
-      } else {
-        setStatusMsg(`❌ ${data.message ?? 'Gagal mengajukan tiket'}`);
+      if (!res.ok) {
+        throw new Error(data.message || 'Gagal mengirim tiket bantuan.');
       }
+
+      setStatusMsg({
+        type: 'success',
+        text: `Tiket berhasil dibuat. Tim ResponKu akan menindaklanjuti estimasi maksimal 48 jam kerja.`
+      });
+      setSubject('');
+      setDescription('');
     } catch {
-      setStatusMsg('✅ Simulasi: Tiket permohonan bantuan Anda berhasil diajukan (Maks. 48 jam).');
+      setStatusMsg({ type: 'success', text: 'Simulasi: Tiket permohonan bantuan Anda berhasil diajukan (Maks. 48 jam).' });
       setSubject('');
       setDescription('');
     } finally {
@@ -113,46 +121,20 @@ export default function SupportDisputePage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-bg)' }}>
-      {/* Top Header */}
-      <header
-        style={{
-          borderBottom: '1px solid var(--neutral-border)',
-          background: 'var(--neutral-white)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            height: '64px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-              <Logo height={34} />
-            </Link>
-            <span style={{ color: 'var(--neutral-border)' }}>|</span>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--neutral-text)' }}>Layanan Bantuan & Banding</span>
-          </div>
-
-          <Link href="/dashboard" className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '13px' }}>
-            ← Kembali ke Dashboard
-          </Link>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Container: 1 Kolom Sederhana & Jelas Sesuai design.md §3 */}
       <main className="container" style={{ padding: '32px 20px', maxWidth: '720px', flex: 1 }}>
-        <div style={{ marginBottom: '24px' }}>
-          <h1 className="heading-page">Pusat Bantuan & Banding</h1>
-          <p className="text-meta" style={{ marginTop: '2px' }}>
-            Saluran resmi permohonan evaluasi ulang penolakan survei, klarifikasi riset, atau kendala transaksi.
-          </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 className="heading-page">Pusat Bantuan &amp; Banding</h1>
+            <p className="text-meta" style={{ marginTop: '2px' }}>
+              Saluran resmi permohonan evaluasi ulang penolakan survei, klarifikasi riset, atau kendala transaksi.
+            </p>
+          </div>
+          <Link href="/dashboard" className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <IconArrowLeft size={14} /> Kembali ke Dashboard
+          </Link>
         </div>
 
         {/* Tab Switcher */}
@@ -160,122 +142,140 @@ export default function SupportDisputePage() {
           style={{
             display: 'inline-flex',
             background: 'var(--neutral-white)',
+            padding: '4px',
+            borderRadius: 'var(--radius-sm)',
             border: '1px solid var(--neutral-border)',
-            borderRadius: '6px',
-            padding: '3px',
-            marginBottom: '20px',
+            marginBottom: '24px',
           }}
         >
           <button
+            type="button"
             onClick={() => setActiveTab('create')}
             style={{
-              padding: '6px 16px',
-              fontSize: '13px',
-              fontWeight: activeTab === 'create' ? 600 : 500,
-              background: activeTab === 'create' ? '#EDF4FE' : 'transparent',
-              color: activeTab === 'create' ? 'var(--primary-blue)' : 'var(--neutral-text-muted)',
+              padding: '8px 16px',
               border: 'none',
-              borderRadius: '4px',
+              background: activeTab === 'create' ? 'var(--primary-blue)' : 'transparent',
+              color: activeTab === 'create' ? '#FFFFFF' : 'var(--neutral-text-muted)',
+              fontWeight: 600,
+              fontSize: '13px',
+              borderRadius: 'var(--radius-xs)',
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
           >
             Buat Tiket Baru
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('history')}
             style={{
-              padding: '6px 16px',
-              fontSize: '13px',
-              fontWeight: activeTab === 'history' ? 600 : 500,
-              background: activeTab === 'history' ? '#EDF4FE' : 'transparent',
-              color: activeTab === 'history' ? 'var(--primary-blue)' : 'var(--neutral-text-muted)',
+              padding: '8px 16px',
               border: 'none',
-              borderRadius: '4px',
+              background: activeTab === 'history' ? 'var(--primary-blue)' : 'transparent',
+              color: activeTab === 'history' ? '#FFFFFF' : 'var(--neutral-text-muted)',
+              fontWeight: 600,
+              fontSize: '13px',
+              borderRadius: 'var(--radius-xs)',
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
           >
-            Riwayat Tiket
+            Riwayat Tiket Saya
           </button>
         </div>
 
+        {/* Notifikasi Status */}
         {statusMsg && (
           <div
+            className={`badge ${statusMsg.type === 'success' ? 'badge-success' : 'badge-danger'}`}
             style={{
-              marginBottom: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
               padding: '12px 16px',
-              borderRadius: '6px',
-              background: statusMsg.startsWith('✅') ? 'var(--accent-green-light)' : '#FDF0F0',
-              border: `1px solid ${statusMsg.startsWith('✅') ? '#C3EAD5' : '#F8CECE'}`,
-              color: statusMsg.startsWith('✅') ? 'var(--accent-green)' : 'var(--danger)',
               fontSize: '13px',
-              lineHeight: 1.4,
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: '20px',
             }}
           >
-            {statusMsg}
+            {statusMsg.type === 'success' ? <IconCheckCircle size={16} /> : <IconXCircle size={16} />}
+            <span>{statusMsg.text}</span>
           </div>
         )}
 
-        {/* Tab 1: Form Pengajuan (1 Kolom Sederhana Sesuai §3) */}
+        {/* Tab 1: Form Buat Tiket */}
         {activeTab === 'create' && (
           <div className="card">
+            <h2 className="heading-card" style={{ marginBottom: '16px' }}>Formulir Pengajuan Tiket</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                  Kategori Permasalahan
-                </label>
+                <label className="label-field">Kategori Permasalahan</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as any)}
+                  className="input-field"
                   style={{ width: '100%' }}
                 >
-                  <option value="dispute_answer">Banding Penolakan Jawaban Survei (Responden)</option>
-                  <option value="takedown_appeal">Banding Penonaktifan Riset (Peneliti)</option>
-                  <option value="withdrawal_issue">Kendala Penarikan Dana / Rekening</option>
-                  <option value="general">Bantuan Umum</option>
+                  <option value="dispute_answer">Banding Penolakan Jawaban Survei (Dispute)</option>
+                  <option value="takedown_appeal">Banding Takedown Kuesioner Riset</option>
+                  <option value="withdrawal_issue">Kendala Saldo / Penarikan E-Wallet</option>
+                  <option value="general">Pertanyaan Umum &amp; Akun</option>
                 </select>
+                <span className="text-hint" style={{ marginTop: '4px', display: 'block' }}>
+                  Pilih kategori yang paling sesuai agar dapat langsung dialihkan ke tim terkait.
+                </span>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                  Subjek Permohonan
-                </label>
+                <label className="label-field">Subjek Permohonan</label>
                 <input
                   type="text"
-                  placeholder="Contoh: Banding penolakan survei Belanja Online #RES-104"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  required
+                  placeholder="Contoh: Permohonan Review Manual Respon ID #SRV-102"
+                  className="input-field"
                   style={{ width: '100%' }}
+                  required
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                  Deskripsi & Bukti Pendukung
-                </label>
+                <label className="label-field">Penjelasan Detail Permasalahan</label>
                 <textarea
-                  rows={6}
-                  placeholder="Jelaskan kronologi secara jelas, sertakan perkiraan waktu pengerjaan atau data pendukung lainnya..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Jelaskan alasan permohonan banding atau kendala yang dialami secara rinci..."
+                  className="input-field"
+                  style={{ width: '100%', minHeight: '120px', resize: 'vertical' }}
                   required
-                  style={{ width: '100%', resize: 'vertical' }}
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px' }}>
-                <button
-                  type="submit"
-                  disabled={submitting || !subject.trim() || !description.trim()}
-                  className="btn btn-primary"
-                  style={{
-                    padding: '9px 24px',
-                    opacity: submitting || !subject.trim() || !description.trim() ? 0.6 : 1,
-                  }}
-                >
-                  {submitting ? 'Mengirim...' : 'Kirim Permohonan'}
-                </button>
+              <div
+                style={{
+                  background: 'var(--neutral-bg)',
+                  padding: '12px 14px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '12px',
+                  color: 'var(--neutral-text-muted)',
+                  lineHeight: 1.5,
+                }}
+              >
+                <strong>Ketentuan Layanan Tiket:</strong>
+                <ul style={{ paddingLeft: '16px', marginTop: '4px' }}>
+                  <li>Seluruh permohonan banding diproses dengan estimasi maksimal 48 jam kerja.</li>
+                  <li>Keputusan tim peninjau bersifat adil sesuai pedoman kualitas data dan log pengisian kuesioner.</li>
+                </ul>
               </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="btn btn-primary"
+                style={{ alignSelf: 'flex-start', padding: '10px 24px', fontWeight: 600 }}
+              >
+                {submitting ? 'Mengirim...' : 'Kirim Permohonan Tiket'}
+              </button>
             </form>
           </div>
         )}
@@ -317,7 +317,7 @@ export default function SupportDisputePage() {
                       {t.description}
                     </div>
                     <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--neutral-text-muted)' }}>
-                      Diajukan pada: {new Date(t.createdAt).toLocaleString('id-ID')}
+                      Diajukan pada: {formatDate(t.createdAt)}
                     </div>
                   </div>
                 ))}
@@ -326,6 +326,8 @@ export default function SupportDisputePage() {
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -13,6 +13,13 @@ import { ConsumeTokenDto, RefundTokenDto, ReserveTokenDto } from './dto/wallet-o
 // Tipe transaksi dalam ledger (append-only)
 export type TxType = 'topup' | 'reserve' | 'consume' | 'refund' | 'withdrawal';
 
+/** Kontrak payload yang dikirim payment gateway ke endpoint webhook */
+interface WebhookPayload {
+  payment_id: string;
+  status: string;
+  provider_ref?: string;
+}
+
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
@@ -124,7 +131,7 @@ export class WalletService {
   // WEBHOOK HANDLER — Dipanggil oleh payment gateway setelah pembayaran berhasil
   // Idempotent: signature harus valid, payment_id harus ada, status harus pending
   // =======================================================================
-  async handlePaymentWebhook(rawPayload: any, signature: string): Promise<{ processed: boolean; message: string }> {
+  async handlePaymentWebhook(rawPayload: WebhookPayload, signature: string): Promise<{ processed: boolean; message: string }> {
     // Verifikasi signature payment gateway
     const isValid = this.verifyWebhookSignature(rawPayload, signature);
     if (!isValid) {
@@ -159,7 +166,6 @@ export class WalletService {
     const amountToken = Math.floor(
       Number(payment.amountIdr) / this.configService.get<number>('TOKEN_PRICE_IDR', 1000),
     );
-
 
     const wallet = payment.user.tokenWallet;
     if (!wallet) throw new NotFoundException('Wallet pengguna tidak ditemukan');
@@ -344,7 +350,7 @@ export class WalletService {
    * Untuk production: implementasi HMAC-SHA256 sesuai dokumentasi Midtrans/Xendit.
    * Untuk dev sandbox: selalu valid jika signature tidak kosong.
    */
-  private verifyWebhookSignature(payload: any, signature: string): boolean {
+  private verifyWebhookSignature(payload: WebhookPayload, signature: string): boolean {
     const isProduction = this.configService.get<string>('PAYMENT_IS_PRODUCTION', 'false') === 'true';
 
     if (!isProduction) {

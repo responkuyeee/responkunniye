@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Logo from '../../components/Logo';
+import Logo from '@/components/Logo';
+import AdminHeader from '@/components/AdminHeader';
+import { formatDate } from '@/utils/format';
+import { IconCheckCircle, IconArrowLeft } from '@/components/Icons';
 
 interface QualityReviewItem {
   participation_id: string;
@@ -18,57 +21,59 @@ interface QualityReviewItem {
   };
 }
 
+const SAMPLE_DATA: QualityReviewItem[] = [
+  {
+    participation_id: 'part-101',
+    respondent: { id: 'u1', name: 'Andi Susanto', email: 'andi.susanto@example.com' },
+    research: { id: 'r1', title: 'Survei Preferensi Pembayaran Digital 2026', estimatedDurationMinutes: 10 },
+    submitted_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+    auto_screening_result: 'flagged',
+    signal_flags: { too_fast: true, straight_lining: false, attention_check_failed: false },
+  },
+  {
+    participation_id: 'part-102',
+    respondent: { id: 'u2', name: 'Dewi Lestari', email: 'dewi.lestari@example.com' },
+    research: { id: 'r2', title: 'Riset Layanan E-Commerce Jabodetabek', estimatedDurationMinutes: 15 },
+    submitted_at: new Date(Date.now() - 3600000 * 12).toISOString(),
+    auto_screening_result: 'flagged',
+    signal_flags: { too_fast: false, straight_lining: true, attention_check_failed: true },
+  },
+];
+
 export default function AdminQualityReviewPage() {
   const [items, setItems] = useState<QualityReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState('');
 
-  const sampleData: QualityReviewItem[] = [
-    {
-      participation_id: 'part-101',
-      respondent: { id: 'u1', name: 'Andi Susanto', email: 'andi.susanto@example.com' },
-      research: { id: 'r1', title: 'Survei Preferensi Pembayaran Digital 2026', estimatedDurationMinutes: 10 },
-      submitted_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-      auto_screening_result: 'flagged',
-      signal_flags: { too_fast: true, straight_lining: false, attention_check_failed: false },
-    },
-    {
-      participation_id: 'part-102',
-      respondent: { id: 'u2', name: 'Dewi Lestari', email: 'dewi.lestari@example.com' },
-      research: { id: 'r2', title: 'Riset Layanan E-Commerce Jabodetabek', estimatedDurationMinutes: 15 },
-      submitted_at: new Date(Date.now() - 3600000 * 12).toISOString(),
-      auto_screening_result: 'flagged',
-      signal_flags: { too_fast: false, straight_lining: true, attention_check_failed: true },
-    },
-  ];
-
-  const fetchQueue = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        setItems(sampleData);
-        return;
-      }
-      const res = await fetch('/api/admin/quality-review', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const result = await res.json();
-        setItems(result.data && result.data.length > 0 ? result.data : sampleData);
-      } else {
-        setItems(sampleData);
-      }
-    } catch {
-      setItems(sampleData);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let isMounted = true;
+    const fetchQueue = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          if (isMounted) setItems(SAMPLE_DATA);
+          return;
+        }
+        const res = await fetch('/api/admin/quality-review', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const result = await res.json();
+          if (isMounted) setItems(result.data && result.data.length > 0 ? result.data : SAMPLE_DATA);
+        } else {
+          if (isMounted) setItems(SAMPLE_DATA);
+        }
+      } catch {
+        if (isMounted) setItems(SAMPLE_DATA);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
     fetchQueue();
+    return () => { isMounted = false; };
   }, []);
 
   const handleDecision = async (id: string, decision: 'approved' | 'rejected') => {
@@ -89,10 +94,10 @@ export default function AdminQualityReviewPage() {
           }),
         });
       }
-      setActionMsg(`✓ Keputusan "${decision.toUpperCase()}" untuk partisipasi ${id} berhasil diterapkan.`);
+      setActionMsg(`Keputusan "${decision.toUpperCase()}" untuk partisipasi ${id} berhasil diterapkan.`);
       setItems((prev) => prev.filter((item) => item.participation_id !== id));
     } catch {
-      setActionMsg(`✓ Simulasi: Keputusan "${decision.toUpperCase()}" berhasil.`);
+      setActionMsg(`Simulasi: Keputusan "${decision.toUpperCase()}" berhasil diterapkan.`);
       setItems((prev) => prev.filter((item) => item.participation_id !== id));
     } finally {
       setProcessingId(null);
@@ -102,49 +107,35 @@ export default function AdminQualityReviewPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-bg)' }}>
-      {/* Top Nav Khusus Admin — Sesuai design.md §3: Warna nav neutral dark (#0B2E63) */}
-      <header
-        style={{
-          background: 'var(--primary-blue-dark)',
-          color: '#FFFFFF',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            height: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-              <Logo height={30} inverse />
-            </Link>
-            <span style={{ color: 'rgba(255, 255, 255, 0.3)' }}>|</span>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#E4F5EC', letterSpacing: '0.02em' }}>
-              PANEL ADMIN QUALITY
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '13px' }}>
-            <Link href="/admin/finance" style={{ color: '#E0E4E9' }}>
-              Ke Admin Finance →
-            </Link>
-            <Link href="/dashboard" className="btn btn-secondary" style={{ padding: '4px 12px', fontSize: '12px', background: '#FFFFFF', color: 'var(--neutral-text)' }}>
-              Ke Dashboard User
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Modern Admin Header dengan Tab Aktif & Tombol Balik ke /admin */}
+      <AdminHeader activeTab="quality" />
 
       {/* Main Admin Content — Layout Dense / Scan Cepat Sesuai design.md §3 */}
       <main className="container" style={{ padding: '24px 20px', flex: 1 }}>
+        {/* Back Link to Main Admin */}
+        <div style={{ marginBottom: '16px' }}>
+          <Link
+            href="/admin"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#2563EB',
+              fontSize: '13px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              padding: '6px 12px',
+              backgroundColor: '#EFF6FF',
+              borderRadius: '6px',
+              border: '1px solid #BFDBFE',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <IconArrowLeft size={14} color="#2563EB" />
+            <span>← Kembali ke Portal Admin Utama</span>
+          </Link>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '16px' }}>
           <div>
             <h1 className="heading-page" style={{ fontSize: '20px' }}>
@@ -169,9 +160,13 @@ export default function AdminQualityReviewPage() {
               color: 'var(--accent-green)',
               fontSize: '13px',
               marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
             }}
           >
-            {actionMsg}
+            <IconCheckCircle size={15} color="var(--accent-green)" />
+            <span>{actionMsg}</span>
           </div>
         )}
 
@@ -180,8 +175,9 @@ export default function AdminQualityReviewPage() {
           {loading ? (
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--neutral-text-muted)' }}>Memuat data...</div>
           ) : items.length === 0 ? (
-            <div style={{ padding: '48px', textAlign: 'center', color: 'var(--neutral-text-muted)', fontSize: '13px' }}>
-              🎉 Tidak ada antrian yang ter-flag. Seluruh jawaban aman dalam masa hold 24 jam.
+            <div style={{ padding: '48px', textAlign: 'center', color: 'var(--neutral-text-muted)', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <IconCheckCircle size={16} color="var(--accent-green)" />
+              <span>Tidak ada antrian yang ter-flag. Seluruh jawaban aman dalam masa hold 24 jam.</span>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -201,7 +197,7 @@ export default function AdminQualityReviewPage() {
                       <td style={{ padding: '12px 16px', verticalAlign: 'top' }}>
                         <div style={{ fontWeight: 600, color: 'var(--neutral-text)' }}>{item.participation_id}</div>
                         <div className="text-meta" style={{ fontSize: '11px' }}>
-                          {new Date(item.submitted_at).toLocaleString('id-ID')}
+                          {formatDate(item.submitted_at)}
                         </div>
                       </td>
                       <td style={{ padding: '12px 16px', verticalAlign: 'top' }}>

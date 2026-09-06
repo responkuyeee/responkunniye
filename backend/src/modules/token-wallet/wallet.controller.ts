@@ -14,7 +14,7 @@ import { Request } from 'express';
 import { WalletService } from './wallet.service';
 import { TopupDto } from './dto/topup.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../auth/current-user.decorator';
+import { CurrentUser, AuthUser } from '../auth/current-user.decorator';
 
 @Controller()
 export class WalletController {
@@ -25,21 +25,21 @@ export class WalletController {
   @Get('wallet')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async getBalance(@CurrentUser() user: any) {
+  async getBalance(@CurrentUser() user: AuthUser) {
     return this.walletService.getBalance(user.id);
   }
 
   @Get('wallet/transactions')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async getTransactions(@CurrentUser() user: any) {
+  async getTransactions(@CurrentUser() user: AuthUser) {
     return this.walletService.getTransactions(user.id);
   }
 
   @Post('wallet/topup')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async topup(@CurrentUser() user: any, @Body() dto: TopupDto) {
+  async topup(@CurrentUser() user: AuthUser, @Body() dto: TopupDto) {
     return this.walletService.initTopup(user.id, dto);
   }
 
@@ -48,7 +48,7 @@ export class WalletController {
   @Post('payment/webhook')
   @HttpCode(HttpStatus.OK)
   async handleWebhook(
-    @Body() payload: any,
+    @Body() payload: { payment_id: string; status: string; provider_ref?: string },
     @Headers('x-signature') signature: string,
   ) {
     return this.walletService.handlePaymentWebhook(payload, signature);

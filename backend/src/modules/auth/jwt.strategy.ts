@@ -40,7 +40,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
 
-
     if (!user) {
       throw new UnauthorizedException('Pengguna tidak ditemukan atau sesi telah berakhir');
     }

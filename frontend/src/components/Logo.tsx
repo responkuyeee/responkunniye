@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 
 interface LogoProps {
   height?: number;
@@ -22,8 +21,6 @@ export default function Logo({
 }: LogoProps) {
   const [imgError, setImgError] = useState(false);
 
-  // Jika user meletakkan file gambar di /images/logo.png atau /logo.png, Next.js akan langsung menyajikannya
-  // Jika gambar gagal dimuat (atau belum disalin), fallback ke vector SVG brand yang presisi
   if (!imgError) {
     return (
       <div
@@ -35,6 +32,7 @@ export default function Logo({
           ...style,
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/logo.png"
           alt="ResponKu"
@@ -46,7 +44,6 @@ export default function Logo({
             display: 'block',
           }}
           onError={() => {
-            // Coba fallback ke /logo.png atau fallback vector
             setImgError(true);
           }}
         />
@@ -54,7 +51,6 @@ export default function Logo({
     );
   }
 
-  // Fallback vector SVG jika gambar fisik belum diletakkan
   return (
     <div
       className={`responku-logo-fallback ${className}`}

@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SubmitScreeningDto } from './dto/screening.dto';
 import { SubmitSurveyDto } from './dto/submit-survey.dto';
@@ -434,7 +435,7 @@ export class QualityControlService {
   // =======================================================================
   // PRIVATE HELPER: UPDATE QUALITY SCORE & AUTO-RECOVERY
   // =======================================================================
-  private async adjustQualityScore(tx: any, userId: string, isGoodAnswer: boolean) {
+  private async adjustQualityScore(tx: Prisma.TransactionClient, userId: string, isGoodAnswer: boolean) {
     let qs = await tx.qualityScore.findUnique({ where: { userId } });
     if (!qs) {
       qs = await tx.qualityScore.create({

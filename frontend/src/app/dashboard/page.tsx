@@ -1,51 +1,85 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Logo from '../components/Logo';
-import { formatNumber } from '../utils/format';
+import { useRouter } from 'next/navigation';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { formatNumber } from '@/utils/format';
+import {
+  IconSearch,
+  IconToken,
+  IconCoins,
+  IconUser,
+  IconFlask,
+  IconSurvey,
+  IconShieldCheck,
+  IconClock,
+  IconUsers,
+  IconCheckCircle,
+  IconPlus,
+  IconFileSpreadsheet,
+  IconWallet,
+  IconHelpCircle,
+  IconLogOut,
+  IconSettings,
+  IconChevronDown,
+  IconChevronRight,
+  IconArrowRight,
+  IconTrendingUp,
+  IconActivity,
+  IconBarChart,
+  IconLock,
+} from '@/components/Icons';
 
 type UserRole = 'researcher' | 'respondent';
 
 export default function DashboardPage() {
-  const [role, setRole] = useState<UserRole>('respondent'); // Default to feed per §2.3 / §3
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  const router = useRouter();
+  const [role, setRole] = useState<UserRole>('respondent');
   const [searchQuery, setSearchQuery] = useState('');
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [userName, setUserName] = useState('Budi Santoso');
+  const [userEmail, setUserEmail] = useState('budi.santoso@example.com');
+  const [feedCategory, setFeedCategory] = useState('all');
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  // Form Buat Riset (Researcher)
-  const [targetCount, setTargetCount] = useState<number>(50);
-  const [surveyTitle, setSurveyTitle] = useState('');
-  const [surveyDesc, setSurveyDesc] = useState('');
-  const [surveyUrl, setSurveyUrl] = useState('');
-  const [estimatedDuration, setEstimatedDuration] = useState(10);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        setIsAuthenticated(false);
+        router.push('/login?redirect=/dashboard');
+        return;
+      }
+      setIsAuthenticated(true);
+      const storedName = localStorage.getItem('user_name');
+      const storedEmail = localStorage.getItem('user_email');
+      const storedRole = localStorage.getItem('user_role');
+      const storedAvatar = localStorage.getItem('user_avatar');
+      if (storedName) setUserName(storedName);
+      if (storedEmail) setUserEmail(storedEmail);
+      if (storedRole === 'researcher') setRole('researcher');
+      if (storedAvatar) setUserAvatar(storedAvatar);
+    }
+    setMounted(true);
+  }, [router]);
 
-  // Prohibited Keywords List (Content Moderation otomatis)
-  const PROHIBITED_KEYWORDS = ['judi', 'slot', 'gacor', 'taruhan', 'porn', 'bokep', 'penipuan', 'narkoba', 'cheat', 'scam'];
-  const detectedKeyword = PROHIBITED_KEYWORDS.find(kw =>
-    new RegExp(`\\b${kw}\\b`, 'i').test(`${surveyTitle} ${surveyDesc}`)
-  );
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    router.push('/login');
+  };
 
-  // Form Profil & Consent (UU PDP)
-  const [religion, setReligion] = useState('Islam');
-  const [religionConsent, setReligionConsent] = useState(true);
-  const [dataShareConsent, setDataShareConsent] = useState(true);
-  const [termsConsent, setTermsConsent] = useState(true);
-  const [domicileCity, setDomicileCity] = useState('Jakarta Selatan');
-  const [gpsStatus, setGpsStatus] = useState<string | null>('Terverifikasi (Jakarta Selatan)');
-
-  // Kalkulasi Biaya Real-Time
-  const tokenPrice = 1000;
-  const calculatedTokens = Math.max(50, targetCount);
-  const calculatedCostIdr = calculatedTokens * tokenPrice;
-  const respondentPoolIdr = calculatedCostIdr * 0.8;
-  const platformFeeIdr = calculatedCostIdr * 0.2;
-
-  const handleGpsVerify = () => {
-    setGpsStatus('Mendeteksi GPS...');
-    setTimeout(() => {
-      setGpsStatus('Terverifikasi: Lat -6.2088, Lng 106.8456 (Jakarta Selatan)');
-    }, 600);
+  // Get time-based greeting
+  const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Selamat Pagi';
+    if (h < 17) return 'Selamat Siang';
+    if (h < 20) return 'Selamat Sore';
+    return 'Selamat Malam';
   };
 
   // Mock Feed Data (Respondent)
@@ -118,7 +152,7 @@ export default function DashboardPage() {
       target: 50,
       filled: 50,
       tokenReserved: 50,
-      status: 'Selesai (Kuota Penuh)',
+      status: 'Selesai',
       statusColor: 'badge',
       createdAt: '28 Agu 2026',
     },
@@ -134,489 +168,664 @@ export default function DashboardPage() {
     },
   ];
 
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-bg)' }}>
-      {/* Top Navigation — Sesuai design.md §2.3 & §3 */}
-      <header
-        style={{
-          background: 'var(--neutral-white)',
-          borderBottom: '1px solid var(--neutral-border)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            height: '64px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}
-        >
-          {/* Sisi Kiri: Logo & Search Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1, maxWidth: '500px' }}>
-            <Link href="/" title="Beranda ResponKu" style={{ display: 'flex', alignItems: 'center' }}>
-              <Logo height={34} />
-            </Link>
+  const filteredFeed = researchFeed.filter(item => {
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCat = feedCategory === 'all' || item.category.toLowerCase().includes(feedCategory.toLowerCase());
+    return matchesSearch && matchesCat;
+  });
 
-            <div style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
-              <input
-                type="text"
-                placeholder="Cari research..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '7px 12px 7px 34px',
-                  fontSize: '13px',
-                  background: 'var(--neutral-bg)',
-                  borderColor: 'var(--neutral-border)',
-                }}
-              />
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '11px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--neutral-text-muted)',
-                  fontSize: '13px',
-                }}
-              >
-                🔍
-              </span>
-            </div>
+  // Shared styles
+  const sidebarNavItem: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '10px 14px',
+    borderRadius: 'var(--radius-sm)',
+    color: 'var(--neutral-text)',
+    fontSize: '13px',
+    fontWeight: 600,
+    transition: 'all 0.15s ease',
+    background: 'transparent',
+    textDecoration: 'none',
+  };
+
+  if (isAuthenticated === false) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--neutral-bg)', padding: '20px' }}>
+        <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center', borderRadius: 'var(--radius-xl)' }}>
+          <div style={{ width: '52px', height: '52px', borderRadius: '14px', backgroundColor: 'var(--primary-blue-light)', color: 'var(--primary-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+            <IconLock size={26} />
           </div>
-
-          {/* Sisi Tengah / Kanan: Mode Switcher Instan (Elemen Paling Penting Sesuai §3 & §4.1) */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              background: 'var(--neutral-bg)',
-              padding: '3px',
-              borderRadius: '6px',
-              border: '1px solid var(--neutral-border)',
-            }}
-          >
-            <button
-              type="button"
-              id="role-toggle-respondent"
-              onClick={() => setRole('respondent')}
-              style={{
-                padding: '6px 14px',
-                fontSize: '13px',
-                fontWeight: role === 'respondent' ? 600 : 500,
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                background: role === 'respondent' ? 'var(--accent-green)' : 'transparent',
-                color: role === 'respondent' ? '#FFFFFF' : 'var(--neutral-text-muted)',
-              }}
-            >
-              Mode Responden
-            </button>
-            <button
-              type="button"
-              id="role-toggle-researcher"
-              onClick={() => setRole('researcher')}
-              style={{
-                padding: '6px 14px',
-                fontSize: '13px',
-                fontWeight: role === 'researcher' ? 600 : 500,
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                background: role === 'researcher' ? 'var(--primary-blue)' : 'transparent',
-                color: role === 'researcher' ? '#FFFFFF' : 'var(--neutral-text-muted)',
-              }}
-            >
-              Mode Peneliti
-            </button>
-          </div>
-
-          {/* Sisi Kanan: Notifikasi, Dompet & Profil Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link
-              href="/wallet"
-              className="btn btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '13px' }}
-              title="Dompet Token"
-            >
-              🪙 Saldo: <strong style={{ color: 'var(--accent-green)', marginLeft: '4px' }}>32.0</strong>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--neutral-text)', marginBottom: '8px' }}>
+            Akses Terbatas
+          </h2>
+          <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.6, marginBottom: '24px' }}>
+            Halaman Dashboard hanya dapat diakses oleh pengguna yang telah masuk akun. Mengalihkan ke halaman login...
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <Link href="/login?redirect=/dashboard" className="btn btn-primary" style={{ justifyContent: 'center', padding: '12px' }}>
+              Masuk Sekarang
             </Link>
-
-            <button
-              onClick={() => setShowProfileModal(true)}
-              className="btn btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '13px' }}
-              title="Pengaturan Profil & Kepatuhan Data Pribadi"
-            >
-              👤 Profil
-            </button>
-
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                background: 'var(--primary-blue)',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '13px',
-                fontWeight: 600,
-              }}
-            >
-              B
-            </div>
+            <Link href="/feed" className="btn btn-secondary" style={{ justifyContent: 'center', padding: '12px' }}>
+              Jelajah Kuesioner (Mode Tamu)
+            </Link>
           </div>
         </div>
-      </header>
+      </div>
+    );
+  }
 
-      {/* Main Container 3 Kolom — Sesuai design.md §2.3, §2.4, & §3 */}
-      <div className="container" style={{ padding: '24px 20px', flex: 1 }}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '260px 1fr 280px',
-            gap: '20px',
-            alignItems: 'start',
-          }}
-        >
-          {/* ============================================================ */}
-          {/* KOLOM KIRI (Profil Ringkas & Status)                          */}
-          {/* ============================================================ */}
-          <aside style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Kartu Profil Ringkas */}
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-bg)' }}>
+      <Navbar
+        role={role}
+        onRoleToggle={(newRole) => setRole(newRole)}
+      />
+
+      {/* ============================================================ */}
+      {/* 2. HERO GREETING BANNER                                      */}
+      {/* ============================================================ */}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid var(--neutral-border)' }}>
+        <div className="container" style={{ paddingTop: '24px', paddingBottom: '20px' }}>
+          <div className={mounted ? 'dash-fade-up' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ minWidth: 0, flex: '1 1 260px' }}>
+              <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--neutral-text)', letterSpacing: '-0.02em', lineHeight: 1.3, marginBottom: '4px' }}>
+                {getGreeting()}, {userName.split(' ')[0]}
+              </h1>
+              <p style={{ fontSize: '14px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                {role === 'respondent'
+                  ? 'Yuk lihat survei yang bisa kamu kerjakan hari ini dan dapatkan reward!'
+                  : 'Pantau progres riset, kelola kuesioner, dan lihat insight dari responden.'}
+              </p>
+            </div>
+
+            {role === 'researcher' && (
+              <Link
+                href="/research/create"
+                className="btn btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', flexShrink: 0, fontSize: '13px' }}
+              >
+                <IconPlus size={16} />
+                <span>Buat Riset Baru</span>
+              </Link>
+            )}
+          </div>
+
+          {/* Quick Stat Cards */}
+          <div className={`grid-dashboard-stats ${mounted ? 'dash-fade-up' : ''}`}>
+            {role === 'respondent' ? (
+              <>
+                <StatCard
+                  icon={<IconToken size={18} color="var(--accent-green)" />}
+                  label="Saldo Reward"
+                  value="Rp32.000"
+                  sub="32.0 Token"
+                  accentColor="var(--accent-green)"
+                  delay={0}
+                />
+                <StatCard
+                  icon={<IconCheckCircle size={18} color="var(--primary-blue)" />}
+                  label="Survei Selesai"
+                  value="24"
+                  sub="bulan ini"
+                  accentColor="var(--primary-blue)"
+                  delay={1}
+                />
+                <StatCard
+                  icon={<IconShieldCheck size={18} color="var(--accent-green)" />}
+                  label="Quality Score"
+                  value="98%"
+                  sub="Sangat Baik"
+                  accentColor="var(--accent-green)"
+                  delay={2}
+                />
+                <StatCard
+                  icon={<IconTrendingUp size={18} color="var(--primary-blue)" />}
+                  label="Survei Tersedia"
+                  value={`${researchFeed.length}`}
+                  sub="cocok profilmu"
+                  accentColor="var(--primary-blue)"
+                  delay={3}
+                />
+              </>
+            ) : (
+              <>
+                <StatCard
+                  icon={<IconCoins size={18} color="var(--primary-blue)" />}
+                  label="Saldo Token"
+                  value="250"
+                  sub="Token tersedia"
+                  accentColor="var(--primary-blue)"
+                  delay={0}
+                />
+                <StatCard
+                  icon={<IconFlask size={18} color="var(--accent-green)" />}
+                  label="Riset Aktif"
+                  value="2"
+                  sub="sedang berjalan"
+                  accentColor="var(--accent-green)"
+                  delay={1}
+                />
+                <StatCard
+                  icon={<IconUsers size={18} color="var(--primary-blue)" />}
+                  label="Total Responden"
+                  value="130"
+                  sub="terkumpul"
+                  accentColor="var(--primary-blue)"
+                  delay={2}
+                />
+                <StatCard
+                  icon={<IconBarChart size={18} color="var(--accent-green)" />}
+                  label="Completion Rate"
+                  value="85%"
+                  sub="rata-rata"
+                  accentColor="var(--accent-green)"
+                  delay={3}
+                />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 3. MAIN 3-COLUMN LAYOUT                                      */}
+      {/* ============================================================ */}
+      <div className="container" style={{ paddingTop: '20px', paddingBottom: '40px', flex: 1 }}>
+        <div className="grid-layout-3col">
+          {/* ========================================================== */}
+          {/* LEFT SIDEBAR                                                */}
+          {/* ========================================================== */}
+          <aside className={mounted ? 'dash-fade-up' : ''} style={{ display: 'flex', flexDirection: 'column', gap: '16px', animationDelay: '0.05s' }}>
+            {/* Profile Card */}
+            <div className="card" style={{ padding: '20px', borderRadius: 'var(--radius-xl)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '16px' }}>
                 <div
                   style={{
-                    width: '44px',
-                    height: '44px',
+                    width: '56px',
+                    height: '56px',
                     borderRadius: '50%',
-                    background: '#EDF4FE',
-                    color: 'var(--primary-blue)',
+                    background: role === 'researcher' ? 'var(--primary-blue)' : 'var(--accent-green)',
+                    color: '#FFFFFF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '18px',
-                    fontWeight: 700,
-                    border: '1px solid #D1E3FC',
+                    fontSize: '20px',
+                    fontWeight: 800,
+                    overflow: 'hidden',
+                    border: '3px solid #FFFFFF',
+                    boxShadow: `0 0 0 2px ${role === 'researcher' ? 'rgba(27,111,224,0.25)' : 'rgba(28,154,91,0.25)'}`,
+                    marginBottom: '12px',
                   }}
                 >
-                  BS
+                  {userAvatar ? (
+                    <img src={userAvatar} alt={userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    userName.split(' ').map(n => n[0]).slice(0, 2).join('')
+                  )}
                 </div>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--neutral-text)' }}>Budi Santoso</div>
-                  <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>Jakarta Selatan, DKI</div>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--neutral-text)', marginBottom: '2px' }}>
+                  {userName}
                 </div>
+                <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', marginBottom: '8px' }}>
+                  Jakarta Selatan, Indonesia
+                </div>
+                <span className={`badge ${role === 'researcher' ? 'badge-cyan' : 'badge-emerald'}`} style={{ fontSize: '10px' }}>
+                  {role === 'researcher' ? 'Peneliti Aktif' : 'Responden Terverifikasi'}
+                </span>
               </div>
 
-              <div style={{ borderTop: '1px solid var(--neutral-border)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* Quality / Balance info */}
+              <div style={{ borderTop: '1px solid var(--neutral-border)', paddingTop: '14px' }}>
                 {role === 'respondent' ? (
                   <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                      <span style={{ color: 'var(--neutral-text-muted)' }}>Reputasi Akun:</span>
-                      {/* Sesuai §4.6: Quality score TIDAK ditampilkan sebagai angka mentah, melainkan kualitatif */}
-                      <span className="badge badge-emerald" title="Tingkat akurasi jawaban konsisten">
-                        Baik (Terpercaya)
-                      </span>
+                    <div style={{ marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
+                        <span style={{ color: 'var(--neutral-text-muted)' }}>Quality Score</span>
+                        <strong style={{ color: 'var(--accent-green)' }}>98%</strong>
+                      </div>
+                      <div className="progress-bar-track" style={{ height: '6px' }}>
+                        <div className="progress-bar-fill" style={{ width: '98%', backgroundColor: 'var(--accent-green)' }} />
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                      <span style={{ color: 'var(--neutral-text-muted)' }}>Saldo Reward:</span>
-                      <strong style={{ color: 'var(--accent-green)' }}>Rp32.000</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                      <span style={{ color: 'var(--neutral-text-muted)' }}>Masa Hold:</span>
-                      <span style={{ color: 'var(--warning)', fontSize: '12px' }}>4.8 Token (24 jam)</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
+                      <span style={{ color: 'var(--neutral-text-muted)' }}>Masa Hold</span>
+                      <span className="badge badge-warning" style={{ fontSize: '10px', padding: '2px 8px' }}>4.8 Token</span>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                      <span style={{ color: 'var(--neutral-text-muted)' }}>Saldo Token:</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '8px' }}>
+                      <span style={{ color: 'var(--neutral-text-muted)' }}>Saldo Token</span>
                       <strong style={{ color: 'var(--primary-blue)' }}>250 Token</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                      <span style={{ color: 'var(--neutral-text-muted)' }}>Riset Aktif:</span>
-                      <span>2 Proyek</span>
                     </div>
                     <Link
                       href="/wallet"
                       className="btn btn-primary"
-                      style={{ width: '100%', marginTop: '6px', padding: '8px 12px', fontSize: '13px' }}
+                      style={{ width: '100%', padding: '8px 12px', fontSize: '12px', justifyContent: 'center' }}
                     >
-                      + Top Up Saldo Token
+                      + Top-Up Saldo
                     </Link>
                   </>
                 )}
               </div>
             </div>
 
-            {/* Menu Pintasan Kiri */}
-            <div className="card" style={{ padding: '12px 16px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--neutral-text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Navigasi Cepat
+            {/* Navigation Menu (Desktop Sidebar Only) */}
+            <div className="card hide-on-mobile" style={{ padding: '12px', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--neutral-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 14px 8px' }}>
+                Menu
               </div>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
-                <li>
-                  <Link href="/wallet" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--neutral-text)', padding: '6px 0' }}>
-                    🪙 Dompet & Pencairan Dana
-                  </Link>
-                </li>
-                <li>
-                  <button
-                    onClick={() => setShowProfileModal(true)}
-                    style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--neutral-text)', padding: '6px 0', cursor: 'pointer', font: 'inherit', width: '100%', textAlign: 'left' }}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                {[
+                  { href: '/dashboard', icon: <IconActivity size={15} color="var(--primary-blue)" />, label: 'Dashboard', active: true },
+                  { href: '/feed', icon: <IconSurvey size={15} color="var(--primary-blue)" />, label: 'Feed Survei' },
+                  { href: '/wallet', icon: <IconWallet size={15} color="var(--accent-green)" />, label: 'Dompet & Mutasi' },
+                  { href: '/profile', icon: <IconUser size={15} color="var(--primary-blue)" />, label: 'Profil' },
+                  { href: '/support', icon: <IconHelpCircle size={15} color="var(--warning)" />, label: 'Bantuan' },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`nav-item-dash ${item.active ? 'active' : ''}`}
+                    style={{
+                      ...sidebarNavItem,
+                      backgroundColor: item.active ? 'var(--primary-blue-light)' : 'transparent',
+                      color: item.active ? 'var(--primary-blue)' : 'var(--neutral-text)',
+                    }}
                   >
-                    🛡️ Verifikasi GPS & Privasi
-                  </button>
-                </li>
-                <li>
-                  <Link href="/support" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--neutral-text)', padding: '6px 0' }}>
-                    ⚖️ Layanan Bantuan & Banding
+                    {item.icon}
+                    <span>{item.label}</span>
+                    {item.active && <IconChevronRight size={13} color="var(--primary-blue)" style={{ marginLeft: 'auto' }} />}
                   </Link>
-                </li>
-              </ul>
+                ))}
+              </div>
             </div>
           </aside>
 
-          {/* ============================================================ */}
-          {/* KOLOM TENGAH (FEED UTAMA)                                     */}
-          {/* ============================================================ */}
+          {/* ========================================================== */}
+          {/* CENTER FEED                                                 */}
+          {/* ========================================================== */}
           <main style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Header Feed */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Section Title */}
+            <div className={mounted ? 'dash-fade-up' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', animationDelay: '0.1s' }}>
               <div>
-                <h1 className="heading-page">
-                  {role === 'respondent' ? 'Research Tersedia' : 'Daftar Riset Saya'}
-                </h1>
-                <p className="text-meta" style={{ marginTop: '2px' }}>
+                <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--neutral-text)', letterSpacing: '-0.01em' }}>
+                  {role === 'respondent' ? 'Survei Tersedia' : 'Riset Saya'}
+                </h2>
+                <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', marginTop: '2px' }}>
                   {role === 'respondent'
-                    ? 'Menampilkan survei yang cocok secara demografi dengan profil Anda.'
-                    : 'Pantau pengumpulan responden dan kelola survei yang sedang berjalan.'}
+                    ? `${filteredFeed.length} survei cocok dengan profilmu`
+                    : `${myResearches.length} riset ditemukan`}
                 </p>
               </div>
-
-              {role === 'researcher' && (
-                <button
-                  id="btn-create-research-top"
-                  onClick={() => setShowCreateModal(true)}
-                  className="btn btn-primary"
+              {role === 'respondent' && (
+                <Link
+                  href="/feed"
+                  style={{ fontSize: '13px', fontWeight: 600, color: 'var(--primary-blue)', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  + Buat Research Baru
-                </button>
+                  <span>Lihat Semua</span>
+                  <IconArrowRight size={14} />
+                </Link>
               )}
             </div>
 
-            {/* FEED: Mode Respondent */}
+            {/* Category Chips (Respondent) */}
             {role === 'respondent' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {researchFeed.map((item) => (
-                  <div key={item.id} className="card" style={{ padding: '18px 20px' }}>
-                    {/* Urutan Elemen Card Sesuai design.md §2.4:
-                        1. Judul research
-                        2. Reward per jawaban (angka hijau paling menonjol)
-                        3. Meta: estimasi durasi, sisa kuota, deadline
-                        4. Tombol aksi: "Kerjakan Survey" (bg accent-green) */}
-                    
-                    {/* 1. Judul Research */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '8px' }}>
-                      <h2 className="heading-card" style={{ flex: 1 }}>
-                        {item.title}
-                      </h2>
-                      <span className="badge" style={{ flexShrink: 0 }}>
-                        {item.category}
-                      </span>
-                    </div>
-
-                    {/* 2. Reward per jawaban (Paling menonjol setelah judul) */}
-                    <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                      <span style={{ fontSize: '13px', color: 'var(--neutral-text-muted)' }}>Reward:</span>
-                      <span
-                        style={{
-                          fontSize: '18px',
-                          fontWeight: 700,
-                          color: 'var(--accent-green)',
-                          letterSpacing: '-0.01em',
-                        }}
-                      >
-                        Rp{formatNumber(item.rewardIdr)}
-                      </span>
-                      <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>
-                        ({item.rewardToken} Token)
-                      </span>
-                    </div>
-
-                    {/* 3. Meta: estimasi durasi, sisa kuota, deadline */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '16px',
-                        fontSize: '13px',
-                        color: 'var(--neutral-text-muted)',
-                        marginBottom: '16px',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <span>⏱️ Durasi: <strong style={{ color: 'var(--neutral-text)' }}>~{item.durationMinutes} menit</strong></span>
-                      <span>👥 Kuota: <strong style={{ color: 'var(--neutral-text)' }}>{item.quotaCurrent}/{item.quotaTotal} terisi</strong></span>
-                      <span>📅 Batas Waktu: <strong style={{ color: 'var(--neutral-text)' }}>{item.deadline}</strong></span>
-                    </div>
-
-                    {/* 4. Tombol aksi: Kerjakan Survey */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--neutral-border)', paddingTop: '12px' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>
-                        ✓ Otomatis terverifikasi demografi
-                      </span>
-                      <button
-                        onClick={() => alert(`Memulai pengerjaan: ${item.title}`)}
-                        className="btn btn-action"
-                        style={{ padding: '8px 20px' }}
-                      >
-                        Kerjakan Survey →
-                      </button>
-                    </div>
-                  </div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {['all', 'Fintech', 'Retail', 'Pendidikan', 'Transportasi'].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setFeedCategory(cat)}
+                    className="chip-dash"
+                    style={{
+                      padding: '5px 14px',
+                      borderRadius: 'var(--radius-pill)',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      border: feedCategory === cat ? '1.5px solid var(--primary-blue)' : '1px solid var(--neutral-border)',
+                      backgroundColor: feedCategory === cat ? 'var(--primary-blue)' : '#FFFFFF',
+                      color: feedCategory === cat ? '#FFFFFF' : 'var(--neutral-text-muted)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {cat === 'all' ? 'Semua' : cat}
+                  </button>
                 ))}
               </div>
             )}
 
-            {/* FEED: Mode Researcher */}
-            {role === 'researcher' && (
+            {/* ── RESPONDENT SURVEY CARDS ── */}
+            {role === 'respondent' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {myResearches.map((item) => (
-                  <div key={item.id} className="card" style={{ padding: '18px 20px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                      <div>
-                        <h2 className="heading-card">{item.title}</h2>
-                        <div className="text-meta" style={{ marginTop: '2px' }}>Dibuat pada {item.createdAt}</div>
-                      </div>
-                      <span className={`badge ${item.statusColor}`}>{item.status}</span>
+                {filteredFeed.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className={`survey-card-dash ${mounted ? 'dash-fade-up' : ''}`}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid var(--neutral-border-subtle)',
+                      borderRadius: 'var(--radius-xl)',
+                      padding: '20px 24px',
+                      boxShadow: 'var(--shadow-card)',
+                      transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+                      animationDelay: `${0.1 + idx * 0.06}s`,
+                    }}
+                  >
+                    {/* Top row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '10px' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--neutral-text)', lineHeight: 1.4, flex: 1 }}>
+                        {item.title}
+                      </h3>
+                      <span className="badge badge-cyan" style={{ fontSize: '10px', flexShrink: 0 }}>
+                        {item.category}
+                      </span>
                     </div>
 
-                    {/* Progress Responden Sesuai §3 Mode Researcher */}
-                    <div style={{ margin: '14px 0' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
-                        <span style={{ color: 'var(--neutral-text-muted)' }}>Progress Responden:</span>
-                        <strong>{item.filled} dari {item.target} kuota ({Math.round((item.filled / item.target) * 100)}%)</strong>
+                    {/* Reward + Meta row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '4px 12px',
+                          borderRadius: 'var(--radius-pill)',
+                          backgroundColor: 'var(--accent-green-light)',
+                          color: 'var(--accent-green)',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          border: '1px solid #C3EAD5',
+                        }}
+                      >
+                        <IconCoins size={14} />
+                        Rp{formatNumber(item.rewardIdr)}
+                      </span>
+                      <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <IconClock size={13} color="var(--primary-blue)" />
+                        ~{item.durationMinutes} menit
+                      </span>
+                      <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <IconShieldCheck size={13} color="var(--accent-green)" />
+                        {item.deadline}
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '5px' }}>
+                        <span style={{ color: 'var(--neutral-text-muted)' }}>Kuota terisi</span>
+                        <span style={{ fontWeight: 600, color: 'var(--neutral-text)' }}>
+                          {item.quotaCurrent}/{item.quotaTotal} ({Math.round((item.quotaCurrent / item.quotaTotal) * 100)}%)
+                        </span>
                       </div>
-                      <div style={{ height: '6px', background: '#DFE4EA', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div className="progress-bar-track" style={{ height: '5px' }}>
                         <div
+                          className="progress-bar-fill"
                           style={{
-                            height: '100%',
-                            width: `${(item.filled / item.target) * 100}%`,
-                            background: item.filled >= item.target ? 'var(--accent-green)' : 'var(--primary-blue)',
+                            width: `${(item.quotaCurrent / item.quotaTotal) * 100}%`,
+                            backgroundColor: (item.quotaCurrent / item.quotaTotal) > 0.8 ? 'var(--warning)' : 'var(--primary-blue)',
                           }}
                         />
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--neutral-border)', paddingTop: '12px' }}>
-                      <div style={{ fontSize: '13px', color: 'var(--neutral-text-muted)' }}>
-                        Cadangan Token: <strong style={{ color: 'var(--neutral-text)' }}>{item.tokenReserved} Token</strong>
+                    {/* Footer */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid var(--neutral-border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="badge-pill badge-pill-blue" style={{ fontSize: '10px', padding: '3px 10px' }}>
+                          <IconCheckCircle size={11} /> {item.matchScore}
+                        </span>
                       </div>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <button
-                          onClick={() => alert(`Mengunduh hasil CSV untuk ${item.title}`)}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 14px', fontSize: '13px' }}
-                        >
-                          Ekspor CSV
-                        </button>
-                      </div>
+                      <Link
+                        href={`/research/${item.id}`}
+                        className="btn btn-action"
+                        style={{ padding: '7px 18px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        Kerjakan
+                        <IconArrowRight size={13} />
+                      </Link>
                     </div>
                   </div>
                 ))}
+
+                {filteredFeed.length === 0 && (
+                  <div className="empty-state">
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--neutral-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--neutral-text-muted)', marginBottom: '12px' }}>
+                      <IconSearch size={22} />
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--neutral-text)', marginBottom: '4px' }}>
+                      Tidak Ada Survei Ditemukan
+                    </div>
+                    <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', maxWidth: '320px', margin: '0 auto' }}>
+                      Coba ganti kata kunci atau periksa kembali nanti.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── RESEARCHER RESEARCH CARDS ── */}
+            {role === 'researcher' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {myResearches.map((item, idx) => {
+                  const pct = Math.round((item.filled / item.target) * 100);
+                  const isComplete = item.filled >= item.target;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`research-card-dash ${mounted ? 'dash-fade-up' : ''}`}
+                      style={{
+                        background: '#FFFFFF',
+                        border: '1px solid var(--neutral-border-subtle)',
+                        borderRadius: 'var(--radius-xl)',
+                        padding: '20px 24px',
+                        boxShadow: 'var(--shadow-card)',
+                        transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+                        animationDelay: `${0.1 + idx * 0.06}s`,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--neutral-text)', lineHeight: 1.4 }}>{item.title}</h3>
+                          <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', marginTop: '3px' }}>Dibuat {item.createdAt}</div>
+                        </div>
+                        <span className={`badge ${item.statusColor}`} style={{ fontSize: '10px', flexShrink: 0 }}>{item.status}</span>
+                      </div>
+
+                      {/* Progress */}
+                      <div style={{ marginBottom: '14px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '5px' }}>
+                          <span style={{ color: 'var(--neutral-text-muted)' }}>Responden terkumpul</span>
+                          <span style={{ fontWeight: 600, color: isComplete ? 'var(--accent-green)' : 'var(--neutral-text)' }}>
+                            {item.filled}/{item.target} ({pct}%)
+                          </span>
+                        </div>
+                        <div className="progress-bar-track" style={{ height: '5px' }}>
+                          <div
+                            className="progress-bar-fill"
+                            style={{
+                              width: `${pct}%`,
+                              backgroundColor: isComplete ? 'var(--accent-green)' : 'var(--primary-blue)',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid var(--neutral-border)' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>
+                          Escrow: <strong style={{ color: 'var(--neutral-text)' }}>{item.tokenReserved} Token</strong>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <Link href="/research/create" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '11px' }}>
+                            Studio Soal
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => alert(`Mengunduh CSV untuk ${item.title}`)}
+                            className="btn btn-action"
+                            style={{ padding: '6px 14px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                          >
+                            <IconFileSpreadsheet size={13} />
+                            <span>CSV</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </main>
 
-          {/* ============================================================ */}
-          {/* KOLOM KANAN (Widget Pendukung Sesuai §3)                      */}
-          {/* ============================================================ */}
-          <aside style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* ========================================================== */}
+          {/* RIGHT SIDEBAR                                               */}
+          {/* ========================================================== */}
+          <aside className={mounted ? 'dash-slide-right' : ''} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {role === 'respondent' ? (
               <>
-                {/* Ringkasan Saldo Token Sesuai §2.3 */}
-                <div className="card">
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--neutral-text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Ringkasan Saldo
-                  </div>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--accent-green)', marginBottom: '4px' }}>
-                    Rp32.000
+                {/* Wallet Quick Card */}
+                <div className="card" style={{ padding: '20px', borderRadius: 'var(--radius-xl)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
+                      backgroundColor: 'var(--accent-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <IconWallet size={18} color="var(--accent-green)" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--neutral-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Saldo Dompet
+                      </div>
+                      <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--accent-green)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                        Rp32.000
+                      </div>
+                    </div>
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', marginBottom: '14px' }}>
-                    Setara 32.0 Token (1 Token = Rp1.000)
+                    32.0 Token · 1 Token = Rp1.000
                   </div>
-                  <Link href="/wallet" className="btn btn-secondary" style={{ width: '100%', fontSize: '13px', padding: '8px' }}>
-                    Buka Dompet / Tarik Dana
+                  <Link href="/wallet" className="btn btn-secondary" style={{ width: '100%', fontSize: '12px', padding: '8px 12px', justifyContent: 'center' }}>
+                    Tarik Dana
                   </Link>
                 </div>
 
-                {/* Widget Tips & Deadline */}
-                <div className="card">
-                  <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px' }}>
-                    Tips Menjaga Reputasi (Quality Score)
-                  </h3>
-                  <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', lineHeight: 1.5, marginBottom: '10px' }}>
-                    Bacalah setiap pertanyaan survei dengan teliti. Hindari pengisian terlalu cepat (speeding) atau pola jawaban seragam (straight-lining) agar status Anda tetap <strong>Baik</strong>.
-                  </p>
-                  <div style={{ fontSize: '12px', color: 'var(--primary-blue)', fontWeight: 500 }}>
-                    Status Akun: Terverifikasi Aktif
+                {/* Tips Card */}
+                <div className="card" style={{ padding: '18px', borderRadius: 'var(--radius-lg)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <IconShieldCheck size={16} color="var(--primary-blue)" />
+                    <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--neutral-text)' }}>
+                      Tips Quality Score
+                    </h3>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {[
+                      'Baca setiap pertanyaan dengan teliti',
+                      'Hindari pola jawaban seragam',
+                      'Jangan terlalu cepat (speeding)',
+                      'Konsisten dan jujur dalam menjawab',
+                    ].map((tip, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px', color: 'var(--neutral-text-muted)', lineHeight: 1.5 }}>
+                        <IconCheckCircle size={13} color="var(--accent-green)" style={{ marginTop: '2px', flexShrink: 0 }} />
+                        <span>{tip}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Deadline Mendekat */}
-                <div className="card" style={{ borderColor: '#F8E5B5', background: '#FFFDF7' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--warning)', marginBottom: '4px' }}>
-                    ⏰ Deadline Mendekat
+                {/* Feed CTA */}
+                <div
+                  style={{
+                    padding: '18px',
+                    borderRadius: 'var(--radius-xl)',
+                    backgroundColor: 'var(--primary-blue-light)',
+                    border: '1px solid #D1E3FC',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <IconSurvey size={18} color="var(--primary-blue)" />
+                    <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary-blue-dark)' }}>
+                      Cari Lebih Banyak?
+                    </h3>
                   </div>
-                  <div style={{ fontSize: '13px', color: 'var(--neutral-text)' }}>
-                    Survei Kebutuhan Rumah Tangga ditutup dalam 24 jam.
-                  </div>
+                  <p style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', lineHeight: 1.5, marginBottom: '12px' }}>
+                    Buka halaman Feed untuk filter lengkap dan rekomendasi survei.
+                  </p>
+                  <Link href="/feed" className="btn btn-primary" style={{ width: '100%', fontSize: '12px', padding: '8px 12px', justifyContent: 'center', gap: '6px' }}>
+                    <span>Buka Feed Survei</span>
+                    <IconArrowRight size={13} />
+                  </Link>
                 </div>
               </>
             ) : (
               <>
-                {/* Tombol Buat Research Baru Paling Atas Sesuai §3 Mode Researcher */}
-                <div className="card" style={{ textAlign: 'center', background: '#EDF4FE', borderColor: '#D1E3FC' }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--primary-blue-dark)', marginBottom: '6px' }}>
-                    Butuh Data Cepat?
-                  </h3>
-                  <p style={{ fontSize: '13px', color: 'var(--neutral-text-muted)', marginBottom: '14px' }}>
-                    Dapatkan responden terverifikasi dalam hitungan jam.
-                  </p>
-                  <button
-                    id="btn-create-research-right"
-                    onClick={() => setShowCreateModal(true)}
-                    className="btn btn-primary"
-                    style={{ width: '100%', padding: '10px' }}
-                  >
-                    + Buat Research Baru
-                  </button>
+                {/* CTA Create */}
+                <div
+                  style={{
+                    padding: '20px',
+                    borderRadius: 'var(--radius-xl)',
+                    backgroundColor: 'var(--primary-blue-light)',
+                    border: '1px solid #D1E3FC',
+                  }}
+                >
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#FFFFFF',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px',
+                      boxShadow: 'var(--shadow-xs)',
+                    }}>
+                      <IconFlask size={20} color="var(--primary-blue)" />
+                    </div>
+                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--primary-blue-dark)', marginBottom: '6px' }}>
+                      Butuh Responden?
+                    </h3>
+                    <p style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', marginBottom: '14px', lineHeight: 1.5 }}>
+                      Dapatkan responden terverifikasi domisili & usia dalam hitungan jam.
+                    </p>
+                    <Link href="/research/create" className="btn btn-primary" style={{ width: '100%', padding: '10px 14px', justifyContent: 'center', fontSize: '13px' }}>
+                      + Buat Kuesioner Baru
+                    </Link>
+                  </div>
                 </div>
 
-                {/* Standar Validitas Riset */}
-                <div className="card">
-                  <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>
-                    Standar Kuota & Akurasi
+                {/* Research Quality Checklist */}
+                <div className="card" style={{ padding: '18px', borderRadius: 'var(--radius-lg)' }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '12px', color: 'var(--neutral-text)' }}>
+                    Standar Mutu Riset
                   </h3>
-                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--neutral-text-muted)' }}>
-                    <li>✓ Minimal responden: 50 orang per kuesioner</li>
-                    <li>✓ Otomatis terfilter domisili & GPS</li>
-                    <li>✓ Deteksi bot & straight-lining otomatis</li>
-                    <li>✓ Ekspor CSV bersih siap olah SPSS/Excel</li>
-                  </ul>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {[
+                      'Minimal responden: 50 orang',
+                      'Filter GPS & usia otomatis',
+                      'Deteksi anti-bot & straight-lining',
+                      'Ekspor CSV siap SPSS & R',
+                    ].map((item, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--neutral-text-muted)' }}>
+                        <IconCheckCircle size={14} color="var(--accent-green)" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Token Info */}
+                <div className="card" style={{ padding: '18px', borderRadius: 'var(--radius-lg)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <IconCoins size={16} color="var(--primary-blue)" />
+                    <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--neutral-text)' }}>Info Token</h3>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', lineHeight: 1.6 }}>
+                    1 Token = Rp1.000. Token yang direservasi akan dikunci sebagai escrow dan dicairkan secara otomatis ke responden setelah jawaban divalidasi.
+                  </div>
+                  <Link
+                    href="/wallet"
+                    style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 600, color: 'var(--primary-blue)', marginTop: '10px' }}
+                  >
+                    <span>Kelola Saldo</span>
+                    <IconArrowRight size={12} />
+                  </Link>
                 </div>
               </>
             )}
@@ -624,355 +833,51 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* MODAL BUAT RESEARCH BARU (2 KOLOM SESUAI design.md §3)        */}
-      {/* ============================================================ */}
-      {showCreateModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(18, 32, 58, 0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-            padding: '20px',
-          }}
-        >
-          <div
-            className="card"
-            style={{
-              maxWidth: '840px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '24px',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--neutral-border)', paddingBottom: '14px' }}>
-              <div>
-                <h2 className="heading-page" style={{ fontSize: '20px' }}>Buat Research Baru</h2>
-                <p className="text-meta">Publikasikan kuesioner Anda untuk responden terverifikasi.</p>
-              </div>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--neutral-text-muted)', fontSize: '18px', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
+      <Footer />
+    </div>
+  );
+}
 
-            {/* Layout 2 Kolom: Form di kiri, Ringkasan Biaya Sticky di kanan */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', alignItems: 'start' }}>
-              {/* Form Input Kiri */}
-              <form
-                id="form-create-research"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  alert(`Riset berhasil dipublikasikan! Cadangan ${calculatedTokens} token dialokasikan.`);
-                  setShowCreateModal(false);
-                }}
-                style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
-              >
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                    Judul Research
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Riset Kepuasan Pengguna Dompet Digital"
-                    value={surveyTitle}
-                    onChange={(e) => setSurveyTitle(e.target.value)}
-                    style={{
-                      width: '100%',
-                      borderColor: detectedKeyword ? 'var(--danger)' : 'var(--neutral-border)',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                    Deskripsi Singkat Riset
-                  </label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Jelaskan topik riset dan kriteria responden yang dicari..."
-                    value={surveyDesc}
-                    onChange={(e) => setSurveyDesc(e.target.value)}
-                    style={{
-                      width: '100%',
-                      borderColor: detectedKeyword ? 'var(--danger)' : 'var(--neutral-border)',
-                    }}
-                  />
-                </div>
-
-                {/* Content Moderation Warning Sesuai §4.4 */}
-                {detectedKeyword && (
-                  <div
-                    style={{
-                      background: '#FDF0F0',
-                      border: '1px solid #F8CECE',
-                      padding: '10px 14px',
-                      borderRadius: '6px',
-                      color: 'var(--danger)',
-                      fontSize: '13px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    <strong>Peringatan Kebijakan:</strong> Terdeteksi kata <code>&quot;{detectedKeyword}&quot;</code>. Hapus kata tersebut untuk melanjutkan.
-                  </div>
-                )}
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                    Tautan Survei (Google Form / Typeform)
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://forms.gle/..."
-                    value={surveyUrl}
-                    onChange={(e) => setSurveyUrl(e.target.value)}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                      Target Responden (Min. 50)
-                    </label>
-                    <input
-                      type="number"
-                      min={50}
-                      required
-                      value={targetCount}
-                      onChange={(e) => setTargetCount(parseInt(e.target.value) || 0)}
-                      style={{ width: '100%' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                      Estimasi Waktu (Menit)
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      required
-                      value={estimatedDuration}
-                      onChange={(e) => setEstimatedDuration(parseInt(e.target.value) || 5)}
-                      style={{ width: '100%' }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="btn btn-secondary"
-                    style={{ flex: 1 }}
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={targetCount < 50 || Boolean(detectedKeyword)}
-                    className="btn btn-primary"
-                    style={{
-                      flex: 1,
-                      opacity: targetCount < 50 || Boolean(detectedKeyword) ? 0.5 : 1,
-                      cursor: targetCount < 50 || Boolean(detectedKeyword) ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    Cadangkan Token & Publikasikan
-                  </button>
-                </div>
-              </form>
-
-              {/* Panel Ringkasan Biaya Live-Update Sticky Kanan Sesuai §3 & §4.2 */}
-              <div
-                style={{
-                  background: 'var(--neutral-bg)',
-                  border: '1px solid var(--neutral-border)',
-                  borderRadius: '6px',
-                  padding: '18px',
-                  position: 'sticky',
-                  top: '10px',
-                }}
-              >
-                <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--neutral-text)', marginBottom: '14px' }}>
-                  Ringkasan Biaya Riset
-                </h3>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--neutral-text-muted)' }}>Target Responden:</span>
-                    <strong>{targetCount} Orang</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--neutral-text-muted)' }}>Estimasi Durasi:</span>
-                    <strong>{estimatedDuration} Menit</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--neutral-text-muted)' }}>Biaya per Responden:</span>
-                    <span>🪙 1.0 Token (Rp1.000)</span>
-                  </div>
-
-                  <div style={{ borderTop: '1px solid var(--neutral-border)', margin: '6px 0' }} />
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--accent-green)' }}>
-                    <span>• Hak Responden (80%):</span>
-                    <strong>Rp{formatNumber(respondentPoolIdr)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--neutral-text-muted)' }}>
-                    <span>• Platform Fee (20%):</span>
-                    <span>Rp{formatNumber(platformFeeIdr)}</span>
-                  </div>
-
-                  <div style={{ borderTop: '1px solid var(--neutral-border)', margin: '6px 0' }} />
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--neutral-text)' }}>Total Deposit:</span>
-                    <strong style={{ fontSize: '18px', color: 'var(--primary-blue-dark)' }}>
-                      Rp{formatNumber(calculatedCostIdr)}
-                    </strong>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', textAlign: 'right' }}>
-                    (Setara {calculatedTokens} Token)
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '16px', background: 'var(--neutral-white)', border: '1px solid var(--neutral-border)', borderRadius: '4px', padding: '10px', fontSize: '12px', color: 'var(--neutral-text-muted)', lineHeight: 1.4 }}>
-                  ℹ️ Token langsung dialokasikan dalam status <em>Reserve</em> dan hanya dipotong saat jawaban responden disetujui.
-                </div>
-              </div>
-            </div>
-          </div>
+/* ─── Stat Card Component ─── */
+function StatCard({ icon, label, value, sub, accentColor, delay }: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub: string;
+  accentColor: string;
+  delay: number;
+}) {
+  return (
+    <div
+      className="stat-card-dash dash-count"
+      style={{
+        background: '#FFFFFF',
+        border: '1px solid var(--neutral-border-subtle)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '16px 18px',
+        boxShadow: 'var(--shadow-xs)',
+        transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+        animationDelay: `${0.05 + delay * 0.08}s`,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+        <div style={{
+          width: '32px', height: '32px', borderRadius: 'var(--radius-sm)',
+          backgroundColor: accentColor === 'var(--accent-green)' ? 'var(--accent-green-light)' : 'var(--primary-blue-light)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {icon}
         </div>
-      )}
-
-      {/* ============================================================ */}
-      {/* MODAL PROFIL & KEPATUHAN PDP (UU PDP §4.5)                   */}
-      {/* ============================================================ */}
-      {showProfileModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(18, 32, 58, 0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-            padding: '20px',
-          }}
-        >
-          <div className="card" style={{ maxWidth: '520px', width: '100%', padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 className="heading-page" style={{ fontSize: '18px' }}>Profil & Kepatuhan Privasi (UU PDP)</h2>
-              <button
-                onClick={() => setShowProfileModal(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--neutral-text-muted)', fontSize: '18px', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                  Domisili Kota
-                </label>
-                <input
-                  type="text"
-                  value={domicileCity}
-                  onChange={(e) => setDomicileCity(e.target.value)}
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              {/* Verifikasi GPS */}
-              <div style={{ background: 'var(--neutral-bg)', border: '1px solid var(--neutral-border)', borderRadius: '6px', padding: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600 }}>Verifikasi GPS Domisili</span>
-                  <button onClick={handleGpsVerify} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '12px' }}>
-                    Perbarui Lokasi
-                  </button>
-                </div>
-                <div style={{ fontSize: '12px', color: 'var(--accent-green)' }}>
-                  {gpsStatus}
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '5px' }}>
-                  Agama (Data Pribadi Spesifik)
-                </label>
-                <input
-                  type="text"
-                  value={religion}
-                  onChange={(e) => setReligion(e.target.value)}
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              {/* Sesuai §4.5: Consent checkbox terpisah dua baris berbeda, tidak digabung */}
-              <div style={{ borderTop: '1px solid var(--neutral-border)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={religionConsent}
-                    onChange={(e) => setReligionConsent(e.target.checked)}
-                    style={{ marginTop: '2px' }}
-                  />
-                  <span>
-                    Saya memberikan persetujuan eksplisit untuk pemrosesan data agama saya khusus pencocokan riset demografis (UU PDP).
-                  </span>
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={dataShareConsent}
-                    onChange={(e) => setDataShareConsent(e.target.checked)}
-                    style={{ marginTop: '2px' }}
-                  />
-                  <span>
-                    Saya menyetujui data jawaban survei anonim dibagikan kepada peneliti terkait.
-                  </span>
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={termsConsent}
-                    onChange={(e) => setTermsConsent(e.target.checked)}
-                    style={{ marginTop: '2px' }}
-                  />
-                  <span>
-                    Saya menyetujui Syarat dan Ketentuan Layanan ResponKu.
-                  </span>
-                </label>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                <button
-                  onClick={() => setShowProfileModal(false)}
-                  className="btn btn-primary"
-                  style={{ padding: '8px 20px' }}
-                >
-                  Simpan Perubahan
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--neutral-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          {label}
+        </span>
+      </div>
+      <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--neutral-text)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+        {value}
+      </div>
+      <div style={{ fontSize: '11px', color: 'var(--neutral-text-muted)', marginTop: '3px' }}>
+        {sub}
+      </div>
     </div>
   );
 }

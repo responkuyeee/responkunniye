@@ -2,8 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Logo from '../components/Logo';
-import { formatNumber, formatToken } from '../utils/format';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { formatNumber, formatToken, formatCurrencyIdr } from '@/utils/format';
+import {
+  IconToken,
+  IconWallet,
+  IconCoins,
+  IconShieldCheck,
+  IconArrowRight,
+  IconCheckCircle,
+  IconXCircle,
+  IconLock,
+  IconX,
+} from '@/components/Icons';
 
 interface WalletBalance {
   balance_token: number;
@@ -184,40 +196,7 @@ export default function WalletPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-bg)' }}>
-      {/* Top Header */}
-      <header
-        style={{
-          borderBottom: '1px solid var(--neutral-border)',
-          background: 'var(--neutral-white)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            height: '64px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-              <Logo height={34} />
-            </Link>
-            <span style={{ color: 'var(--neutral-border)' }}>|</span>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--neutral-text)' }}>Dompet & Saldo Token</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link href="/dashboard" className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '13px' }}>
-              ← Kembali ke Dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Navbar tokenBalance={balance?.balance_token} />
 
       {/* Main Content */}
       <main className="container" style={{ padding: '32px 20px', maxWidth: '820px', flex: 1 }}>
@@ -543,6 +522,8 @@ export default function WalletPage() {
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
   );
 }

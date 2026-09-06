@@ -14,8 +14,7 @@ import { SubmitScreeningDto } from './dto/screening.dto';
 import { SubmitSurveyDto } from './dto/submit-survey.dto';
 import { AdminQualityDecisionDto } from './dto/admin-decision.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../auth/current-user.decorator';
-
+import { CurrentUser, AuthUser } from '../auth/current-user.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 
@@ -30,7 +29,7 @@ export class QualityControlController {
   @Post('research/:id/screening')
   @HttpCode(HttpStatus.OK)
   async submitScreening(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) researchId: string,
     @Body() dto: SubmitScreeningDto,
   ) {
@@ -43,7 +42,7 @@ export class QualityControlController {
   @Post('research/:id/participate')
   @HttpCode(HttpStatus.OK)
   async participate(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) researchId: string,
   ) {
     return this.qcService.participate(user.id, researchId);
@@ -55,7 +54,7 @@ export class QualityControlController {
   @Post('research/:id/submit')
   @HttpCode(HttpStatus.OK)
   async submitSurvey(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) researchId: string,
     @Body() dto: SubmitSurveyDto,
   ) {
@@ -81,11 +80,10 @@ export class QualityControlController {
   @Roles('admin_quality')
   @HttpCode(HttpStatus.OK)
   async processDecision(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Param('participationId', ParseUUIDPipe) participationId: string,
     @Body() dto: AdminQualityDecisionDto,
   ) {
     return this.qcService.processAdminDecision(user.id, participationId, dto);
   }
 }
-

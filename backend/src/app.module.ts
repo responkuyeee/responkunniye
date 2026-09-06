@@ -34,4 +34,3 @@ import { SupportModule } from './modules/support/support.module';
   providers: [AppService],
 })
 export class AppModule {}
-

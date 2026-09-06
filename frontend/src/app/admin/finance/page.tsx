@@ -2,7 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Logo from '../../components/Logo';
+import Logo from '@/components/Logo';
+import AdminHeader from '@/components/AdminHeader';
+import { formatNumber, formatDate } from '@/utils/format';
+import { IconCheckCircle, IconArrowLeft } from '@/components/Icons';
 
 interface WithdrawalItem {
   id: string;
@@ -20,86 +23,88 @@ interface WithdrawalItem {
   createdAt: string;
 }
 
+const SAMPLE_WITHDRAWALS: WithdrawalItem[] = [
+  {
+    id: 'wd-101',
+    userId: 'usr-101',
+    userName: 'Budi Santoso',
+    tokenAmount: 100,
+    grossAmountIdr: 100000,
+    feePercentage: 3.0,
+    feeAmountIdr: 3000,
+    netAmountIdr: 97000,
+    bankName: 'BCA',
+    accountNumber: '8271928371',
+    accountHolderName: 'Budi Santoso',
+    status: 'requested',
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: 'wd-102',
+    userId: 'usr-102',
+    userName: 'Siti Rahmawati',
+    tokenAmount: 250,
+    grossAmountIdr: 250000,
+    feePercentage: 3.0,
+    feeAmountIdr: 7500,
+    netAmountIdr: 242500,
+    bankName: 'GoPay',
+    accountNumber: '081298765432',
+    accountHolderName: 'Siti Rahmawati',
+    status: 'requested',
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+  },
+  {
+    id: 'wd-103',
+    userId: 'usr-103',
+    userName: 'Ahmad Fauzi',
+    tokenAmount: 50,
+    grossAmountIdr: 50000,
+    feePercentage: 3.0,
+    feeAmountIdr: 1500,
+    netAmountIdr: 48500,
+    bankName: 'Mandiri',
+    accountNumber: '1400019283741',
+    accountHolderName: 'Ahmad Fauzi',
+    status: 'completed',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+];
+
 export default function AdminFinancePage() {
   const [withdrawals, setWithdrawals] = useState<WithdrawalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
 
-  const sampleWithdrawals: WithdrawalItem[] = [
-    {
-      id: 'wd-101',
-      userId: 'usr-101',
-      userName: 'Budi Santoso',
-      tokenAmount: 100,
-      grossAmountIdr: 100000,
-      feePercentage: 3.0,
-      feeAmountIdr: 3000,
-      netAmountIdr: 97000,
-      bankName: 'BCA',
-      accountNumber: '8271928371',
-      accountHolderName: 'Budi Santoso',
-      status: 'requested',
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: 'wd-102',
-      userId: 'usr-102',
-      userName: 'Siti Rahmawati',
-      tokenAmount: 250,
-      grossAmountIdr: 250000,
-      feePercentage: 3.0,
-      feeAmountIdr: 7500,
-      netAmountIdr: 242500,
-      bankName: 'GoPay',
-      accountNumber: '081298765432',
-      accountHolderName: 'Siti Rahmawati',
-      status: 'requested',
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-    },
-    {
-      id: 'wd-103',
-      userId: 'usr-103',
-      userName: 'Ahmad Fauzi',
-      tokenAmount: 50,
-      grossAmountIdr: 50000,
-      feePercentage: 3.0,
-      feeAmountIdr: 1500,
-      netAmountIdr: 48500,
-      bankName: 'Mandiri',
-      accountNumber: '1400019283741',
-      accountHolderName: 'Ahmad Fauzi',
-      status: 'completed',
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ];
-
-  const fetchWithdrawals = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        setWithdrawals(sampleWithdrawals);
-        return;
-      }
-      const res = await fetch('/api/admin/withdrawals', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setWithdrawals(data.data?.length > 0 ? data.data : sampleWithdrawals);
-      } else {
-        setWithdrawals(sampleWithdrawals);
-      }
-    } catch {
-      setWithdrawals(sampleWithdrawals);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let isMounted = true;
+    const fetchWithdrawals = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          if (isMounted) setWithdrawals(SAMPLE_WITHDRAWALS);
+          return;
+        }
+        const res = await fetch('/api/admin/withdrawals', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setWithdrawals(data.data?.length > 0 ? data.data : SAMPLE_WITHDRAWALS);
+        } else {
+          if (isMounted) setWithdrawals(SAMPLE_WITHDRAWALS);
+        }
+      } catch {
+        if (isMounted) setWithdrawals(SAMPLE_WITHDRAWALS);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
     fetchWithdrawals();
+    return () => { isMounted = false; };
   }, []);
 
   const handleApprove = async (id: string) => {
@@ -116,12 +121,12 @@ export default function AdminFinancePage() {
           },
         });
       }
-      setMsg(`✓ Penarikan ${id} disetujui & dicairkan.`);
+      setMsg(`Penarikan ${id} disetujui & dicairkan.`);
       setWithdrawals((prev) =>
         prev.map((w) => (w.id === id ? { ...w, status: 'completed' } : w)),
       );
     } catch {
-      setMsg(`✓ Simulasi: Penarikan ${id} berhasil diproses.`);
+      setMsg(`Simulasi: Penarikan ${id} berhasil diproses.`);
       setWithdrawals((prev) =>
         prev.map((w) => (w.id === id ? { ...w, status: 'completed' } : w)),
       );
@@ -136,49 +141,35 @@ export default function AdminFinancePage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-bg)' }}>
-      {/* Top Nav Khusus Admin — Sesuai design.md §3: Warna nav neutral dark (#0B2E63) */}
-      <header
-        style={{
-          background: 'var(--primary-blue-dark)',
-          color: '#FFFFFF',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            height: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-              <Logo height={30} inverse />
-            </Link>
-            <span style={{ color: 'rgba(255, 255, 255, 0.3)' }}>|</span>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#E4F5EC', letterSpacing: '0.02em' }}>
-              PANEL ADMIN FINANCE & DISBURSEMENT
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '13px' }}>
-            <Link href="/admin/quality" style={{ color: '#E0E4E9' }}>
-              Ke Admin Quality →
-            </Link>
-            <Link href="/dashboard" className="btn btn-secondary" style={{ padding: '4px 12px', fontSize: '12px', background: '#FFFFFF', color: 'var(--neutral-text)' }}>
-              Ke Dashboard User
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Modern Admin Header dengan Tab Aktif & Tombol Balik ke /admin */}
+      <AdminHeader activeTab="finance" />
 
       {/* Main Content: Layout Dense & Metric Presisi */}
       <main className="container" style={{ padding: '24px 20px', flex: 1 }}>
+        {/* Back Link to Main Admin */}
+        <div style={{ marginBottom: '16px' }}>
+          <Link
+            href="/admin"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#2563EB',
+              fontSize: '13px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              padding: '6px 12px',
+              backgroundColor: '#EFF6FF',
+              borderRadius: '6px',
+              border: '1px solid #BFDBFE',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <IconArrowLeft size={14} color="#2563EB" />
+            <span>← Kembali ke Portal Admin Utama</span>
+          </Link>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '16px' }}>
           <div>
             <h1 className="heading-page" style={{ fontSize: '20px' }}>
@@ -205,7 +196,7 @@ export default function AdminFinancePage() {
           <div className="card" style={{ padding: '16px 20px' }}>
             <div className="text-meta" style={{ marginBottom: '4px' }}>Total Antrian Pencairan</div>
             <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--neutral-text)' }}>
-              Rp{totalPendingIdr.toLocaleString('id-ID')}
+              Rp{formatNumber(totalPendingIdr)}
             </div>
             <div style={{ fontSize: '12px', color: 'var(--warning)', marginTop: '2px' }}>
               {pendingList.length} transaksi requested
@@ -215,7 +206,7 @@ export default function AdminFinancePage() {
           <div className="card" style={{ padding: '16px 20px' }}>
             <div className="text-meta" style={{ marginBottom: '4px' }}>Pendapatan Fee Penarikan (3%)</div>
             <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--accent-green)' }}>
-              Rp{totalFeesIdr.toLocaleString('id-ID')}
+              Rp{formatNumber(totalFeesIdr)}
             </div>
             <div style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', marginTop: '2px' }}>
               Fee platform terakumulasi
@@ -228,14 +219,18 @@ export default function AdminFinancePage() {
             style={{
               padding: '10px 16px',
               borderRadius: '6px',
-              background: msg.startsWith('✓') ? 'var(--accent-green-light)' : '#FDF0F0',
-              border: `1px solid ${msg.startsWith('✓') ? '#C3EAD5' : '#F8CECE'}`,
-              color: msg.startsWith('✓') ? 'var(--accent-green)' : 'var(--danger)',
+              background: 'var(--accent-green-light)',
+              border: '1px solid #C3EAD5',
+              color: 'var(--accent-green)',
               fontSize: '13px',
               marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
             }}
           >
-            {msg}
+            <IconCheckCircle size={15} color="var(--accent-green)" />
+            <span>{msg}</span>
           </div>
         )}
 
@@ -264,7 +259,7 @@ export default function AdminFinancePage() {
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ fontWeight: 600 }}>{w.id}</div>
                         <div className="text-meta" style={{ fontSize: '11px' }}>
-                          {new Date(w.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          {formatDate(w.createdAt)}
                         </div>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
@@ -275,13 +270,13 @@ export default function AdminFinancePage() {
                         <div className="text-meta" style={{ fontSize: '11px' }}>a.n. {w.accountHolderName ?? w.userName}</div>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
-                        {w.tokenAmount} Tkn (Rp{w.grossAmountIdr.toLocaleString('id-ID')})
+                        {w.tokenAmount} Tkn (Rp{formatNumber(w.grossAmountIdr)})
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--danger)' }}>
-                        -Rp{w.feeAmountIdr.toLocaleString('id-ID')}
+                        -Rp{formatNumber(w.feeAmountIdr)}
                       </td>
                       <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--accent-green)' }}>
-                        Rp{w.netAmountIdr.toLocaleString('id-ID')}
+                        Rp{formatNumber(w.netAmountIdr)}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <span className={`badge ${w.status === 'completed' ? 'badge-emerald' : 'badge-warning'}`}>
@@ -299,7 +294,9 @@ export default function AdminFinancePage() {
                             {actionLoading === w.id ? 'Memproses...' : 'Cairkan'}
                           </button>
                         ) : (
-                          <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)' }}>✓ Selesai</span>
+                          <span style={{ fontSize: '12px', color: 'var(--neutral-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <IconCheckCircle size={12} color="var(--accent-green)" /> Selesai
+                          </span>
                         )}
                       </td>
                     </tr>

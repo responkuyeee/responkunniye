@@ -12,10 +12,9 @@ import {
 import { ResearchService } from './research.service';
 import { CreateResearchDto } from './dto/create-research.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../auth/current-user.decorator';
+import { CurrentUser, AuthUser } from '../auth/current-user.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-
 
 @Controller('research')
 @UseGuards(JwtAuthGuard)
@@ -28,7 +27,7 @@ export class ResearchController {
    */
   @Get()
   @HttpCode(HttpStatus.OK)
-  async getAvailableResearch(@CurrentUser() user: any) {
+  async getAvailableResearch(@CurrentUser() user: AuthUser) {
     return this.researchService.getAvailableResearch(user.id);
   }
 
@@ -39,7 +38,7 @@ export class ResearchController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async createResearch(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Body() dto: CreateResearchDto,
   ) {
     return this.researchService.createResearch(user.id, dto);
@@ -60,7 +59,7 @@ export class ResearchController {
   @Post(':id/publish')
   @HttpCode(HttpStatus.OK)
   async publish(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.researchService.publishResearch(user.id, id);
@@ -72,7 +71,7 @@ export class ResearchController {
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
   async cancel(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.researchService.cancelResearch(user.id, id);
@@ -86,11 +85,10 @@ export class ResearchController {
   @Roles('admin_quality')
   @HttpCode(HttpStatus.OK)
   async takedown(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body('violation_note') violationNote: string,
   ) {
     return this.researchService.takedownResearch(user.id, id, violationNote ?? 'Pelanggaran kebijakan konten');
   }
 }
-

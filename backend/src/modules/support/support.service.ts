@@ -62,7 +62,7 @@ export class SupportService {
    * Antrian semua tiket untuk Admin Quality / Admin Support
    */
   async getAllTicketsForAdmin(category?: string) {
-    const where: any = {};
+    const where: { category?: string } = {};
     if (category) {
       where.category = category;
     }

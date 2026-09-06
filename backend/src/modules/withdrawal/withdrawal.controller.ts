@@ -13,10 +13,9 @@ import { WithdrawalService } from './withdrawal.service';
 import { RewardService } from './reward.service';
 import { RequestWithdrawalDto } from './dto/request-withdrawal.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../auth/current-user.decorator';
+import { CurrentUser, AuthUser } from '../auth/current-user.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -32,7 +31,7 @@ export class WithdrawalController {
   @Post('withdrawals')
   @HttpCode(HttpStatus.CREATED)
   async requestWithdrawal(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Body() dto: RequestWithdrawalDto,
   ) {
     return this.withdrawalService.requestWithdrawal(user.id, dto);
@@ -43,7 +42,7 @@ export class WithdrawalController {
    */
   @Get('withdrawals')
   @HttpCode(HttpStatus.OK)
-  async getUserWithdrawals(@CurrentUser() user: any) {
+  async getUserWithdrawals(@CurrentUser() user: AuthUser) {
     return this.withdrawalService.getUserWithdrawals(user.id);
   }
 
@@ -55,12 +54,11 @@ export class WithdrawalController {
   @Roles('admin_finance')
   @HttpCode(HttpStatus.OK)
   async approveWithdrawal(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.withdrawalService.approveWithdrawal(user.id, id);
   }
-
 
   /**
    * Proses pembuatan reward untuk partisipasi riset yang berstatus Approved

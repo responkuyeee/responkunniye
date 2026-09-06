@@ -24,3 +24,23 @@ export function formatToken(num: number): string {
   const result = parts.length > 1 ? `${parts[0]},${parts[1]}` : parts[0];
   return isNegative ? `-${result}` : result;
 }
+
+const MONTHS_ID = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+];
+
+export function formatDate(dateInput: string | Date | number): string {
+  try {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return '-';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = MONTHS_ID[d.getMonth()];
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day} ${month} ${year}, ${hours}:${minutes}`;
+  } catch {
+    return '-';
+  }
+}
